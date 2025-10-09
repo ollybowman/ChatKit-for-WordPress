@@ -5,7 +5,7 @@
 **Requires at least:** 5.8  
 **Tested up to:** 6.5  
 **Requires PHP:** 7.4  
-**Stable tag:** 1.1.0  
+**Stable tag:** 1.0.0  
 **License:** GPL-2.0-or-later  
 **License URI:** https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,10 +73,8 @@ Yes, the admin interface strings are prepared for translation. An Italian transl
 
 ## Changelog
 
-### 1.1.0
+### 1.0.0
 *   Added support for customizable greeting and default quick questions (up to 3).
 *   Improved admin settings interface.
 *   Added Italian translation files for admin interface.
-
-### 1.0.0
 *   Initial release.
