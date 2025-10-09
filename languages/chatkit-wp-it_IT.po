@@ -1,0 +1,316 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenAI ChatKit for WordPress\n"
+"POT-Creation-Date: 2024-06-01 10:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Italian <it_IT@googlegroups.com>\n"
+"Language: it_IT\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: chatkit-wp.php:28
+msgid "OpenAI ChatKit for WordPress"
+msgstr "OpenAI ChatKit per WordPress"
+
+#: chatkit-wp.php:29
+msgid "Integrate OpenAI's ChatKit into your WordPress site with guided setup. Supports customizable text in any language."
+msgstr "Integra ChatKit di OpenAI nel tuo sito WordPress con setup guidato. Supporta testi personalizzabili in qualsiasi lingua."
+
+#: chatkit-wp.php:31
+msgid "Francesco Grüner"
+msgstr "Francesco Grüner"
+
+#: chatkit-wp.php:32
+msgid "https://francescogruner.it"
+msgstr "https://francescogruner.it"
+
+#: chatkit-wp.php:34
+msgid "GPL v2 or later"
+msgstr "GPL v2 o successiva"
+
+#: chatkit-wp.php:35
+msgid "https://www.gnu.org/licenses/gpl-2.0.html"
+msgstr "https://www.gnu.org/licenses/gpl-2.0.html"
+
+#: chatkit-wp.php:37
+msgid "chatkit-wp"
+msgstr "chatkit-wp"
+
+#: chatkit-wp.php:38
+msgid "5.8"
+msgstr "5.8"
+
+#: chatkit-wp.php:39
+msgid "7.4"
+msgstr "7.4"
+
+#: chatkit-wp.php:127
+msgid "ChatKit Settings"
+msgstr "Impostazioni ChatKit"
+
+#: chatkit-wp.php:128
+msgid "ChatKit"
+msgstr "ChatKit"
+
+#: chatkit-wp.php:154
+msgid "OpenAI API Key"
+msgstr "Chiave API OpenAI"
+
+#: chatkit-wp.php:154
+msgid " *"
+msgstr " *"
+
+#: chatkit-wp.php:162
+msgid "⚠️ IMPORTANT: For security, add this key to"
+msgstr "⚠️ IMPORTANTE: Per sicurezza, aggiungi questa chiave a"
+
+#: chatkit-wp.php:163
+msgid "wp-config.php"
+msgstr "wp-config.php"
+
+#: chatkit-wp.php:164
+msgid ":<br><code>define('CHATKIT_OPENAI_API_KEY', 'sk-proj-...');</code>"
+msgstr ":<br><code>define('CHATKIT_OPENAI_API_KEY', 'sk-proj-...');</code>"
+
+#: chatkit-wp.php:173
+msgid "Workflow ID"
+msgstr "ID Workflow"
+
+#: chatkit-wp.php:173
+msgid " *"
+msgstr " *"
+
+#: chatkit-wp.php:181
+msgid "ID of the workflow created in Agent Builder"
+msgstr "ID del workflow creato in Agent Builder"
+
+#: chatkit-wp.php:190
+msgid "Button Text"
+msgstr "Testo pulsante"
+
+#: chatkit-wp.php:199
+msgid "Accent Color"
+msgstr "Colore principale"
+
+#: chatkit-wp.php:208
+msgid "Theme"
+msgstr "Tema"
+
+#: chatkit-wp.php:216
+msgid "Display Options"
+msgstr "Opzioni visualizzazione"
+
+#: chatkit-wp.php:218
+msgid "Show widget on ALL pages automatically"
+msgstr "Mostra widget su TUTTE le pagine automaticamente"
+
+#: chatkit-wp.php:222
+msgid "⚠️ If enabled, the widget will appear on every page without needing the [openai_chatkit] shortcode. Useful for global chat."
+msgstr "⚠️ Se abilitato, il widget apparirà su ogni pagina senza bisogno dello shortcode [openai_chatkit]. Utile per chat globale."
+
+#: chatkit-wp.php:230
+msgid "Advanced Features"
+msgstr "Funzionalità avanzate"
+
+#: chatkit-wp.php:232
+msgid "Enable file uploads"
+msgstr "Abilita caricamento file"
+
+#: chatkit-wp.php:235
+msgid "Keep conversation history (via cookie)"
+msgstr "Mantieni storico conversazioni (tramite cookie)"
+
+#: chatkit-wp.php:249
+msgid "Customize Texts"
+msgstr "Personalizza testi"
+
+#: chatkit-wp.php:251
+msgid "Greeting Text"
+msgstr "Testo di benvenuto"
+
+#: chatkit-wp.php:253
+msgid "Text shown when chat opens."
+msgstr "Testo visualizzato all'apertura della chat."
+
+#: chatkit-wp.php:257
+msgid "Default Prompt 1 (Label)"
+msgstr "Domanda predefinita 1 (Etichetta)"
+
+#: chatkit-wp.php:259
+msgid "Label for the first quick question."
+msgstr "Etichetta per la prima domanda rapida."
+
+#: chatkit-wp.php:263
+msgid "Default Prompt 1 (Sent Text)"
+msgstr "Domanda predefinita 1 (Testo inviato)"
+
+#: chatkit-wp.php:265
+msgid "Actual text sent when clicking prompt 1."
+msgstr "Testo effettivamente inviato quando si clicca sulla domanda 1."
+
+#: chatkit-wp.php:269
+msgid "Default Prompt 2 (Label)"
+msgstr "Domanda predefinita 2 (Etichetta)"
+
+#: chatkit-wp.php:271
+msgid "(Optional) Label for the second quick question."
+msgstr "(Opzionale) Etichetta per la seconda domanda rapida."
+
+#: chatkit-wp.php:275
+msgid "Default Prompt 2 (Sent Text)"
+msgstr "Domanda predefinita 2 (Testo inviato)"
+
+#: chatkit-wp.php:277
+msgid "(Optional) Text sent for prompt 2."
+msgstr "(Opzionale) Testo inviato per la domanda 2."
+
+#: chatkit-wp.php:281
+msgid "Default Prompt 3 (Label)"
+msgstr "Domanda predefinita 3 (Etichetta)"
+
+#: chatkit-wp.php:283
+msgid "(Optional) Label for the third quick question."
+msgstr "(Opzionale) Etichetta per la terza domanda rapida."
+
+#: chatkit-wp.php:287
+msgid "Default Prompt 3 (Sent Text)"
+msgstr "Domanda predefinita 3 (Testo inviato)"
+
+#: chatkit-wp.php:289
+msgid "(Optional) Text sent for prompt 3."
+msgstr "(Opzionale) Testo inviato per la domanda 3."
+
+#: chatkit-wp.php:306
+msgid "Save Settings"
+msgstr "Salva impostazioni"
+
+#: chatkit-wp.php:320
+msgid "Test Configuration"
+msgstr "Test configurazione"
+
+#: chatkit-wp.php:322
+msgid "🔍 Test API Connection"
+msgstr "🔍 Testa connessione API"
+
+#: chatkit-wp.php:343
+msgid "Too many requests. Please try again in a minute."
+msgstr "Troppe richieste. Riprova tra qualche minuto."
+
+#: chatkit-wp.php:348
+msgid "Plugin not configured. Contact administrator."
+msgstr "Plugin non configurato. Contatta l'amministratore."
+
+#: chatkit-wp.php:356
+msgid "Error creating session"
+msgstr "Errore nella creazione della sessione"
+
+#: chatkit-wp.php:368
+msgid "API Key not configured"
+msgstr "API Key non configurata"
+
+#: chatkit-wp.php:371
+msgid "Workflow ID not configured"
+msgstr "Workflow ID non configurato"
+
+#: chatkit-wp.php:383
+msgid "✅ Connection successful! Plugin is correctly configured."
+msgstr "✅ Connessione riuscita! Il plugin è configurato correttamente."
+
+#: chatkit-wp.php:387
+msgid "API Error (status %d): %s"
+msgstr "Errore API (status %d): %s"
+
+#: chatkit-wp.php:398
+msgid "Chat now"
+msgstr "Chatta ora"
+
+#: chatkit-wp.php:400
+msgid "How can I help you today?"
+msgstr "In cosa posso essere utile oggi?"
+
+#: chatkit-wp.php:402
+msgid "How can I assist you?"
+msgstr "Come posso aiutarti?"
+
+#: chatkit-wp.php:404
+msgid "Hi! How can I assist you today?"
+msgstr "Ciao! Come posso aiutarti oggi?"
+
+#: chatkit-wp.php:415
+msgid "Settings saved successfully!"
+msgstr "Impostazioni salvate con successo!"
+
+#: chatkit-wp.php:425
+msgid "📖 How to use this plugin"
+msgstr "📖 Come usare questo plugin"
+
+#: chatkit-wp.php:427
+msgid "Create a workflow on"
+msgstr "Crea un workflow su"
+
+#: chatkit-wp.php:428
+msgid "OpenAI Agent Builder"
+msgstr "OpenAI Agent Builder"
+
+#: chatkit-wp.php:429
+msgid "Copy the"
+msgstr "Copia il"
+
+#: chatkit-wp.php:430
+msgid "Workflow ID"
+msgstr "Workflow ID"
+
+#: chatkit-wp.php:430
+msgid "(starts with"
+msgstr "(inizia con"
+
+#: chatkit-wp.php:430
+msgid "wf_"
+msgstr "wf_"
+
+#: chatkit-wp.php:430
+msgid ")"
+msgstr ")"
+
+#: chatkit-wp.php:431
+msgid "Generate an"
+msgstr "Genera una"
+
+#: chatkit-wp.php:432
+msgid "API Key"
+msgstr "API Key"
+
+#: chatkit-wp.php:433
+msgid "from"
+msgstr "da"
+
+#: chatkit-wp.php:434
+msgid "OpenAI Dashboard"
+msgstr "OpenAI Dashboard"
+
+#: chatkit-wp.php:435
+msgid "Enter credentials below"
+msgstr "Inserisci le credenziali qui sotto"
+
+#: chatkit-wp.php:436
+msgid "Add shortcode"
+msgstr "Aggiungi lo shortcode"
+
+#: chatkit-wp.php:437
+msgid "[openai_chatkit]"
+msgstr "[openai_chatkit]"
+
+#: chatkit-wp.php:437
+msgid "to a page OR enable"
+msgstr "in una pagina OPPURE abilita"
+
+#: chatkit-wp.php:438
+msgid "Show on all pages"
+msgstr "Mostra su tutte le pagine"
+
+#: chatkit-wp.php:522
+msgid "Unable to start chat. Please try again later."
+msgstr "Impossibile avviare la chat. Riprova tra qualche minuto."

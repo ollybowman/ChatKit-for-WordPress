@@ -1,0 +1,90 @@
+/* ChatKit WordPress Plugin - Frontend Styles */
+
+#chatToggleBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10000;
+  padding: 12px 20px;
+  background-color: var(--chatkit-accent, #FF4500);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#chatToggleBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  filter: brightness(1.1);
+}
+
+#chatToggleBtn:active {
+  transform: translateY(0);
+}
+
+#chatToggleBtn[aria-expanded="true"] {
+  background-color: #dc3545;
+  padding: 12px 18px;
+}
+
+#myChatkit {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 400px;
+  height: 600px;
+  max-height: calc(100vh - 140px);
+  z-index: 9999;
+  display: none;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  background: #ffffff;
+}
+
+@keyframes chatkit-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive mobile */
+@media (max-width: 768px) {
+  #chatToggleBtn {
+    bottom: 16px;
+    right: 16px;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  #myChatkit {
+    left: 12px;
+    right: 12px;
+    bottom: 70px;
+    width: auto;
+    height: 75vh;
+    max-height: 75vh;
+    border-radius: 12px;
+  }
+}
+
+/* Fix per alcuni temi WordPress */
+#chatToggleBtn,
+#myChatkit {
+  box-sizing: border-box;
+}
+
+#chatToggleBtn * {
+  box-sizing: border-box;
+}
