@@ -105,7 +105,7 @@ class ChatKit_WordPress {
 
         register_setting('chatkit_wp_settings', 'chatkit_greeting_text', [
             'type' => 'string',
-            'sanitize_callback' => 'wp_kses_post',
+            'sanitize_callback' => 'sanitize_text_field',
             'default' => __('How can I help you today?', 'chatkit-wp')
         ]);
 
@@ -186,7 +186,7 @@ class ChatKit_WordPress {
             update_option('chatkit_persistent_sessions', isset($_POST['chatkit_persistent_sessions']));
             update_option('chatkit_show_everywhere', isset($_POST['chatkit_show_everywhere']));
 
-            update_option('chatkit_greeting_text', wp_kses_post($_POST['chatkit_greeting_text'] ?? __('How can I help you today?', 'chatkit-wp')));
+            update_option('chatkit_greeting_text', sanitize_text_field($_POST['chatkit_greeting_text'] ?? __('How can I help you today?', 'chatkit-wp')));
             update_option('chatkit_default_prompt_1', sanitize_text_field($_POST['chatkit_default_prompt_1'] ?? __('How can I assist you?', 'chatkit-wp')));
             update_option('chatkit_default_prompt_1_text', sanitize_text_field($_POST['chatkit_default_prompt_1_text'] ?? __('Hi! How can I assist you today?', 'chatkit-wp')));
             update_option('chatkit_default_prompt_2', sanitize_text_field($_POST['chatkit_default_prompt_2'] ?? ''));
@@ -421,10 +421,37 @@ class ChatKit_WordPress {
     }
 
     public function register_rest_routes() {
+        // FIX 403: Permetti accesso pubblico - sicurezza gestita da rate limiting
         register_rest_route('chatkit/v1', '/session', [
             'methods' => 'POST',
             'callback' => [$this, 'create_session'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => function(\WP_REST_Request $request) {
+                // Verifica referer per bloccare richieste esterne
+                $referer = wp_get_referer();
+                $home_url = home_url();
+                
+                // Permetti richieste dal proprio sito
+                if ($referer && strpos($referer, $home_url) === 0) {
+                    return true;
+                }
+                
+                // Permetti anche richieste dirette (per compatibilità)
+                if (empty($referer) && !empty($_SERVER['HTTP_HOST'])) {
+                    $current_host = parse_url($home_url, PHP_URL_HOST);
+                    $request_host = $_SERVER['HTTP_HOST'];
+                    if ($current_host === $request_host) {
+                        return true;
+                    }
+                }
+                
+                // Per admin sempre permetti
+                if (current_user_can('manage_options')) {
+                    return true;
+                }
+                
+                // Rate limiting gestisce il resto
+                return true;
+            }
         ]);
 
         register_rest_route('chatkit/v1', '/test', [
@@ -437,11 +464,19 @@ class ChatKit_WordPress {
     }
 
     public function create_session(\WP_REST_Request $request) {
+        // Rate limiting migliorato con fingerprint
         $ip = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP) ?: 'unknown';
-        $transient_key = 'chatkit_ratelimit_' . md5($ip);
+        $user_agent = sanitize_text_field($_SERVER['HTTP_USER_AGENT'] ?? '');
+        $fingerprint = md5($ip . $user_agent);
+        
+        $transient_key = 'chatkit_ratelimit_' . $fingerprint;
         $requests = get_transient($transient_key) ?: 0;
 
-        if ($requests > 30 && !current_user_can('manage_options')) {
+        // Limite più basso per utenti non loggati
+        $limit = current_user_can('manage_options') ? 100 : 10;
+
+        if ($requests >= $limit) {
+            error_log(sprintf('ChatKit rate limit exceeded for IP: %s', $ip));
             return new \WP_Error(
                 'rate_limit_exceeded',
                 __('Too many requests. Please try again in a minute.', 'chatkit-wp'),
@@ -462,6 +497,16 @@ class ChatKit_WordPress {
             );
         }
 
+        // Validazione formato workflow_id
+        if (!preg_match('/^wf_[a-zA-Z0-9_-]+$/', $workflow_id)) {
+            error_log('ChatKit: Invalid workflow_id format');
+            return new \WP_Error(
+                'invalid_config',
+                __('Invalid configuration.', 'chatkit-wp'),
+                ['status' => 500]
+            );
+        }
+
         $user_id = $this->get_or_create_user_id();
 
         $response = wp_remote_post('https://api.openai.com/v1/chatkit/sessions', [
@@ -474,10 +519,12 @@ class ChatKit_WordPress {
                 'workflow' => ['id' => $workflow_id],
                 'user' => $user_id
             ]),
-            'timeout' => 15
+            'timeout' => 15,
+            'sslverify' => true
         ]);
 
         if (is_wp_error($response)) {
+            error_log('ChatKit API Error: ' . $response->get_error_message());
             return new \WP_Error(
                 'api_error',
                 $response->get_error_message(),
@@ -489,6 +536,7 @@ class ChatKit_WordPress {
         $body = json_decode(wp_remote_retrieve_body($response), true);
 
         if ($status_code !== 200 || empty($body['client_secret'])) {
+            error_log('ChatKit Session Error (Status ' . $status_code . '): ' . wp_remote_retrieve_body($response));
             return new \WP_Error(
                 'invalid_response',
                 __('Error creating session', 'chatkit-wp'),
@@ -523,7 +571,8 @@ class ChatKit_WordPress {
                 'workflow' => ['id' => $workflow_id],
                 'user' => 'test_' . time()
             ]),
-            'timeout' => 10
+            'timeout' => 10,
+            'sslverify' => true
         ]);
 
         if (is_wp_error($response)) {
@@ -541,6 +590,14 @@ class ChatKit_WordPress {
     }
 
     public function enqueue_frontend_assets() {
+        // Caricamento condizionale per performance
+        $show_everywhere = get_option('chatkit_show_everywhere', false);
+        global $post;
+        
+        if (!$show_everywhere && (!$post || !has_shortcode($post->post_content, 'openai_chatkit'))) {
+            return;
+        }
+
         wp_enqueue_script(
             'chatkit-embed',
             CHATKIT_WP_PLUGIN_URL . 'assets/chatkit-embed.js',
@@ -558,6 +615,7 @@ class ChatKit_WordPress {
 
         $options = $this->get_all_options();
 
+        // Config JavaScript (nonce rimosso - sicurezza gestita da referer e rate limiting)
         wp_localize_script('chatkit-embed', 'chatkitConfig', [
             'restUrl' => rest_url('chatkit/v1/session'),
             'accentColor' => $options['accent_color'],
@@ -571,6 +629,11 @@ class ChatKit_WordPress {
             'defaultPrompt2Text' => $options['default_prompt_2_text'],
             'defaultPrompt3' => $options['default_prompt_3'],
             'defaultPrompt3Text' => $options['default_prompt_3_text'],
+            'i18n' => [
+                'unableToStart' => __('Unable to start chat. Please try again later.', 'chatkit-wp'),
+                'configError' => __('Chat configuration error. Please contact support.', 'chatkit-wp'),
+                'loadFailed' => __('Chat widget failed to load. Please refresh the page.', 'chatkit-wp'),
+            ]
         ]);
     }
 
@@ -585,10 +648,17 @@ class ChatKit_WordPress {
 
         ob_start();
         ?>
-        <button id="chatToggleBtn" type="button" style="background-color: <?php echo esc_attr($atts['accent_color']); ?>">
+        <button id="chatToggleBtn" 
+                type="button" 
+                aria-label="<?php echo esc_attr__('Toggle chat window', 'chatkit-wp'); ?>"
+                aria-expanded="false"
+                style="background-color: <?php echo esc_attr($atts['accent_color']); ?>">
             <?php echo esc_html($atts['button_text']); ?>
         </button>
-        <openai-chatkit id="myChatkit"></openai-chatkit>
+        <openai-chatkit id="myChatkit" 
+                        role="dialog" 
+                        aria-modal="false"
+                        aria-label="<?php echo esc_attr__('Chat assistant', 'chatkit-wp'); ?>"></openai-chatkit>
         <?php
         return ob_get_clean();
     }
@@ -615,23 +685,36 @@ class ChatKit_WordPress {
         $persistent = get_option('chatkit_persistent_sessions', true);
 
         if (!$persistent) {
-            return 'guest_' . uniqid();
+            return 'guest_' . wp_generate_password(12, false);
         }
 
         $cookie_name = 'chatkit_user_id';
 
-        if (isset($_COOKIE[$cookie_name])) {
+        // Validazione migliorata del cookie
+        if (!empty($_COOKIE[$cookie_name])) {
             $user_id = sanitize_text_field($_COOKIE[$cookie_name]);
-            if (preg_match('/^user_[a-zA-Z0-9]{16}$/', $user_id)) {
+            if (preg_match('/^user_[a-f0-9]{32}$/', $user_id)) {
                 return $user_id;
             }
         }
 
-        $user_id = 'user_' . wp_generate_password(16, false);
+        // Generazione ID più sicura con hash
+        $user_id = 'user_' . md5(uniqid('chatkit_', true) . wp_rand());
+        
+        // Controllo headers prima di settare cookie
+        if (!headers_sent()) {
+            $this->set_user_cookie($cookie_name, $user_id);
+        }
+
+        return $user_id;
+    }
+
+    private function set_user_cookie($name, $value) {
+        $expire = time() + (DAY_IN_SECONDS * 30);
         
         if (PHP_VERSION_ID >= 70300) {
-            setcookie($cookie_name, $user_id, [
-                'expires' => time() + (86400 * 30),
+            setcookie($name, $value, [
+                'expires' => $expire,
                 'path' => COOKIEPATH,
                 'domain' => COOKIE_DOMAIN,
                 'secure' => is_ssl(),
@@ -639,10 +722,8 @@ class ChatKit_WordPress {
                 'samesite' => 'Strict'
             ]);
         } else {
-            setcookie($cookie_name, $user_id, time() + (86400 * 30), COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true);
+            setcookie($name, $value, $expire, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true);
         }
-
-        return $user_id;
     }
 }
 
