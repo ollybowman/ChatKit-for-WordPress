@@ -73,6 +73,26 @@ Yes, the admin interface strings are prepared for translation. An Italian transl
 
 ## Changelog
 
+### Version 1.0.2 - Bug Fixes & Security
+
+#### Bug Fixes
+- Fixed user error notifications not displaying correctly
+- Added automatic retry mechanism for initialization failures
+- Improved error recovery and DOM element detection
+
+#### Security
+- Enhanced rate limiting (30 req/min, admin exempt)
+- Added IP validation and cookie security hardening
+- Fixed XSS vulnerability in admin JavaScript
+- Improved input sanitization for shortcode attributes
+
+#### Performance
+- Implemented options caching to reduce database queries
+- Optimized asset loading
+
+### Version 1.0.1
+- Initial stable release
+
 ### 1.0.0
 *   Added support for customizable greeting and default quick questions (up to 3).
 *   Improved admin settings interface.
