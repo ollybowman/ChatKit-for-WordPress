@@ -3,7 +3,7 @@
  * Plugin Name: OpenAI ChatKit for WordPress
  * Plugin URI: https://github.com/francescogruner/openai-chatkit-wordpress
  * Description: Integrate OpenAI's ChatKit into your WordPress site with guided setup. Supports customizable text in any language.
- * Version: 1.0.0
+ * Version: 1.0.2
  * Author: Francesco Grüner
  * Author URI: https://francescogruner.it
  * License: GPL v2 or later
@@ -11,18 +11,17 @@
  * Text Domain: chatkit-wp
  * Requires at least: 5.8
  * Requires PHP: 7.4
- * Original Author: Francesco Grüner (https://francescogruner.it)
- * This plugin is based on the original work by Francesco Grüner. Please retain attribution if modifying or redistributing.
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('CHATKIT_WP_VERSION', '1.0.0');
+define('CHATKIT_WP_VERSION', '1.0.2');
 define('CHATKIT_WP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('CHATKIT_WP_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 class ChatKit_WordPress {
     private static $instance = null;
+    private $options_cache = null;
 
     public static function get_instance() {
         if (null === self::$instance) {
@@ -37,11 +36,8 @@ class ChatKit_WordPress {
         add_action('admin_init', [$this, 'register_settings']);
         add_action('rest_api_init', [$this, 'register_rest_routes']);
         add_shortcode('openai_chatkit', [$this, 'render_chatkit_shortcode']);
-
-        // Always load assets (fix)
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
 
-        // Auto-inject if enabled
         if (get_option('chatkit_show_everywhere', false)) {
             add_action('wp_footer', [$this, 'auto_inject_widget'], 999);
         }
@@ -107,7 +103,6 @@ class ChatKit_WordPress {
             'default' => false
         ]);
 
-        // New settings for customizable strings
         register_setting('chatkit_wp_settings', 'chatkit_greeting_text', [
             'type' => 'string',
             'sanitize_callback' => 'wp_kses_post',
@@ -151,6 +146,29 @@ class ChatKit_WordPress {
         ]);
     }
 
+    private function get_all_options() {
+        if (null === $this->options_cache) {
+            $this->options_cache = [
+                'api_key' => $this->get_api_key(),
+                'workflow_id' => $this->get_workflow_id(),
+                'accent_color' => get_option('chatkit_accent_color', '#FF4500'),
+                'button_text' => get_option('chatkit_button_text', __('Chat now', 'chatkit-wp')),
+                'theme_mode' => get_option('chatkit_theme_mode', 'dark'),
+                'enable_attachments' => get_option('chatkit_enable_attachments', false),
+                'persistent_sessions' => get_option('chatkit_persistent_sessions', true),
+                'show_everywhere' => get_option('chatkit_show_everywhere', false),
+                'greeting_text' => get_option('chatkit_greeting_text', __('How can I help you today?', 'chatkit-wp')),
+                'default_prompt_1' => get_option('chatkit_default_prompt_1', __('How can I assist you?', 'chatkit-wp')),
+                'default_prompt_1_text' => get_option('chatkit_default_prompt_1_text', __('Hi! How can I assist you today?', 'chatkit-wp')),
+                'default_prompt_2' => get_option('chatkit_default_prompt_2', ''),
+                'default_prompt_2_text' => get_option('chatkit_default_prompt_2_text', ''),
+                'default_prompt_3' => get_option('chatkit_default_prompt_3', ''),
+                'default_prompt_3_text' => get_option('chatkit_default_prompt_3_text', ''),
+            ];
+        }
+        return $this->options_cache;
+    }
+
     public function render_settings_page() {
         if (!current_user_can('manage_options')) {
             return;
@@ -176,38 +194,26 @@ class ChatKit_WordPress {
             update_option('chatkit_default_prompt_3', sanitize_text_field($_POST['chatkit_default_prompt_3'] ?? ''));
             update_option('chatkit_default_prompt_3_text', sanitize_text_field($_POST['chatkit_default_prompt_3_text'] ?? ''));
 
-            echo '<div class="notice notice-success"><p>' . __('Settings saved successfully!', 'chatkit-wp') . '</p></div>';
+            $this->options_cache = null;
+
+            echo '<div class="notice notice-success"><p>' . esc_html__('Settings saved successfully!', 'chatkit-wp') . '</p></div>';
         }
 
-        $api_key = $this->get_api_key();
-        $workflow_id = $this->get_workflow_id();
-        $accent_color = get_option('chatkit_accent_color', '#FF4500');
-        $button_text = get_option('chatkit_button_text', __('Chat now', 'chatkit-wp'));
-        $theme_mode = get_option('chatkit_theme_mode', 'dark');
-        $enable_attachments = get_option('chatkit_enable_attachments', false);
-        $persistent_sessions = get_option('chatkit_persistent_sessions', true);
-        $show_everywhere = get_option('chatkit_show_everywhere', false);
-
-        $greeting_text = get_option('chatkit_greeting_text', __('How can I help you today?', 'chatkit-wp'));
-        $default_prompt_1 = get_option('chatkit_default_prompt_1', __('How can I assist you?', 'chatkit-wp'));
-        $default_prompt_1_text = get_option('chatkit_default_prompt_1_text', __('Hi! How can I assist you today?', 'chatkit-wp'));
-        $default_prompt_2 = get_option('chatkit_default_prompt_2', '');
-        $default_prompt_2_text = get_option('chatkit_default_prompt_2_text', '');
-        $default_prompt_3 = get_option('chatkit_default_prompt_3', '');
-        $default_prompt_3_text = get_option('chatkit_default_prompt_3_text', '');
+        $options = $this->get_all_options();
+        extract($options);
 
         ?>
         <div class="wrap">
-            <h1><?php _e('ChatKit Settings', 'chatkit-wp'); ?></h1>
+            <h1><?php esc_html_e('ChatKit Settings', 'chatkit-wp'); ?></h1>
 
             <div style="background: #fff; padding: 20px; margin: 20px 0; border-left: 4px solid #2271b1;">
-                <h3>📖 How to use this plugin</h3>
+                <h3>📖 <?php esc_html_e('How to use this plugin', 'chatkit-wp'); ?></h3>
                 <ol>
-                    <li>Create a workflow on <a href="https://platform.openai.com/agent-builder" target="_blank">OpenAI Agent Builder</a> (requires login)</li>
-                    <li>Copy the <strong>Workflow ID</strong> (starts with <code>wf_</code>)</li>
-                    <li>Generate an <strong>API Key</strong> from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Dashboard</a> (requires login)</li>
-                    <li>Enter credentials below</li>
-                    <li>Add shortcode <code>[openai_chatkit]</code> to a page OR enable "Show on all pages"</li>
+                    <li><?php esc_html_e('Create a workflow on', 'chatkit-wp'); ?> <a href="https://platform.openai.com/agent-builder" target="_blank">OpenAI Agent Builder</a> <?php esc_html_e('(requires login)', 'chatkit-wp'); ?></li>
+                    <li><?php esc_html_e('Copy the', 'chatkit-wp'); ?> <strong><?php esc_html_e('Workflow ID', 'chatkit-wp'); ?></strong> (<?php esc_html_e('starts with', 'chatkit-wp'); ?> <code>wf_</code>)</li>
+                    <li><?php esc_html_e('Generate an', 'chatkit-wp'); ?> <strong><?php esc_html_e('API Key', 'chatkit-wp'); ?></strong> <?php esc_html_e('from', 'chatkit-wp'); ?> <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Dashboard</a> <?php esc_html_e('(requires login)', 'chatkit-wp'); ?></li>
+                    <li><?php esc_html_e('Enter credentials below', 'chatkit-wp'); ?></li>
+                    <li><?php esc_html_e('Add shortcode', 'chatkit-wp'); ?> <code>[openai_chatkit]</code> <?php esc_html_e('to a page OR enable "Show on all pages"', 'chatkit-wp'); ?></li>
                 </ol>
             </div>
 
@@ -216,14 +222,14 @@ class ChatKit_WordPress {
 
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><label for="chatkit_api_key"><?php _e('OpenAI API Key', 'chatkit-wp'); ?> *</label></th>
+                        <th scope="row"><label for="chatkit_api_key"><?php esc_html_e('OpenAI API Key', 'chatkit-wp'); ?> *</label></th>
                         <td>
                             <input type="password" id="chatkit_api_key" name="chatkit_api_key"
                                    value="<?php echo esc_attr($api_key); ?>"
                                    class="regular-text"
                                    placeholder="sk-proj-...">
                             <p class="description">
-                                <?php _e('⚠️ IMPORTANT: For security, add this key to', 'chatkit-wp'); ?>
+                                ⚠️ <?php esc_html_e('IMPORTANT: For security, add this key to', 'chatkit-wp'); ?>
                                 <code>wp-config.php</code>:<br>
                                 <code>define('CHATKIT_OPENAI_API_KEY', 'sk-proj-...');</code>
                             </p>
@@ -231,20 +237,20 @@ class ChatKit_WordPress {
                     </tr>
 
                     <tr>
-                        <th scope="row"><label for="chatkit_workflow_id"><?php _e('Workflow ID', 'chatkit-wp'); ?> *</label></th>
+                        <th scope="row"><label for="chatkit_workflow_id"><?php esc_html_e('Workflow ID', 'chatkit-wp'); ?> *</label></th>
                         <td>
                             <input type="text" id="chatkit_workflow_id" name="chatkit_workflow_id"
                                    value="<?php echo esc_attr($workflow_id); ?>"
                                    class="regular-text"
                                    placeholder="wf_...">
                             <p class="description">
-                                <?php _e('ID of the workflow created in Agent Builder', 'chatkit-wp'); ?>
+                                <?php esc_html_e('ID of the workflow created in Agent Builder', 'chatkit-wp'); ?>
                             </p>
                         </td>
                     </tr>
 
                     <tr>
-                        <th scope="row"><label for="chatkit_button_text"><?php _e('Button Text', 'chatkit-wp'); ?></label></th>
+                        <th scope="row"><label for="chatkit_button_text"><?php esc_html_e('Button Text', 'chatkit-wp'); ?></label></th>
                         <td>
                             <input type="text" id="chatkit_button_text" name="chatkit_button_text"
                                    value="<?php echo esc_attr($button_text); ?>"
@@ -253,7 +259,7 @@ class ChatKit_WordPress {
                     </tr>
 
                     <tr>
-                        <th scope="row"><label for="chatkit_accent_color"><?php _e('Accent Color', 'chatkit-wp'); ?></label></th>
+                        <th scope="row"><label for="chatkit_accent_color"><?php esc_html_e('Accent Color', 'chatkit-wp'); ?></label></th>
                         <td>
                             <input type="color" id="chatkit_accent_color" name="chatkit_accent_color"
                                    value="<?php echo esc_attr($accent_color); ?>">
@@ -261,7 +267,7 @@ class ChatKit_WordPress {
                     </tr>
 
                     <tr>
-                        <th scope="row"><label for="chatkit_theme_mode"><?php _e('Theme', 'chatkit-wp'); ?></label></th>
+                        <th scope="row"><label for="chatkit_theme_mode"><?php esc_html_e('Theme', 'chatkit-wp'); ?></label></th>
                         <td>
                             <select id="chatkit_theme_mode" name="chatkit_theme_mode">
                                 <option value="dark" <?php selected($theme_mode, 'dark'); ?>>Dark</option>
@@ -271,95 +277,94 @@ class ChatKit_WordPress {
                     </tr>
 
                     <tr>
-                        <th scope="row"><?php _e('Display Options', 'chatkit-wp'); ?></th>
+                        <th scope="row"><?php esc_html_e('Display Options', 'chatkit-wp'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="chatkit_show_everywhere"
                                        <?php checked($show_everywhere, true); ?>>
-                                <strong><?php _e('Show widget on ALL pages automatically', 'chatkit-wp'); ?></strong>
+                                <strong><?php esc_html_e('Show widget on ALL pages automatically', 'chatkit-wp'); ?></strong>
                             </label>
                             <p class="description">
-                                <?php _e('⚠️ If enabled, the widget will appear on every page without needing the [openai_chatkit] shortcode. Useful for global chat.', 'chatkit-wp'); ?>
+                                ⚠️ <?php esc_html_e('If enabled, the widget will appear on every page without needing the [openai_chatkit] shortcode. Useful for global chat.', 'chatkit-wp'); ?>
                             </p>
                         </td>
                     </tr>
 
                     <tr>
-                        <th scope="row"><?php _e('Advanced Features', 'chatkit-wp'); ?></th>
+                        <th scope="row"><?php esc_html_e('Advanced Features', 'chatkit-wp'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="chatkit_enable_attachments"
                                        <?php checked($enable_attachments, true); ?>>
-                                <?php _e('Enable file uploads', 'chatkit-wp'); ?>
+                                <?php esc_html_e('Enable file uploads', 'chatkit-wp'); ?>
                             </label>
                             <br>
                             <label>
                                 <input type="checkbox" name="chatkit_persistent_sessions"
                                        <?php checked($persistent_sessions, true); ?>>
-                                <?php _e('Keep conversation history (via cookie)', 'chatkit-wp'); ?>
+                                <?php esc_html_e('Keep conversation history (via cookie)', 'chatkit-wp'); ?>
                             </label>
                         </td>
                     </tr>
 
-                    <!-- Customizable Strings Section -->
                     <tr>
-                        <th scope="row"><?php _e('Customize Texts', 'chatkit-wp'); ?></th>
+                        <th scope="row"><?php esc_html_e('Customize Texts', 'chatkit-wp'); ?></th>
                         <td>
                             <table>
                                 <tr>
-                                    <td><label for="chatkit_greeting_text"><?php _e('Greeting Text', 'chatkit-wp'); ?></label></td>
+                                    <td><label for="chatkit_greeting_text"><?php esc_html_e('Greeting Text', 'chatkit-wp'); ?></label></td>
                                     <td><input type="text" id="chatkit_greeting_text" name="chatkit_greeting_text"
                                                value="<?php echo esc_attr($greeting_text); ?>"
                                                class="regular-text">
-                                        <p class="description"><?php _e('Text shown when chat opens.', 'chatkit-wp'); ?></p>
+                                        <p class="description"><?php esc_html_e('Text shown when chat opens.', 'chatkit-wp'); ?></p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><label for="chatkit_default_prompt_1"><?php _e('Default Prompt 1 (Label)', 'chatkit-wp'); ?></label></td>
+                                    <td><label for="chatkit_default_prompt_1"><?php esc_html_e('Default Prompt 1 (Label)', 'chatkit-wp'); ?></label></td>
                                     <td><input type="text" id="chatkit_default_prompt_1" name="chatkit_default_prompt_1"
                                                value="<?php echo esc_attr($default_prompt_1); ?>"
                                                class="regular-text">
-                                        <p class="description"><?php _e('Label for the first quick question.', 'chatkit-wp'); ?></p>
+                                        <p class="description"><?php esc_html_e('Label for the first quick question.', 'chatkit-wp'); ?></p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><label for="chatkit_default_prompt_1_text"><?php _e('Default Prompt 1 (Sent Text)', 'chatkit-wp'); ?></label></td>
+                                    <td><label for="chatkit_default_prompt_1_text"><?php esc_html_e('Default Prompt 1 (Sent Text)', 'chatkit-wp'); ?></label></td>
                                     <td><input type="text" id="chatkit_default_prompt_1_text" name="chatkit_default_prompt_1_text"
                                                value="<?php echo esc_attr($default_prompt_1_text); ?>"
                                                class="regular-text">
-                                        <p class="description"><?php _e('Actual text sent when clicking prompt 1.', 'chatkit-wp'); ?></p>
+                                        <p class="description"><?php esc_html_e('Actual text sent when clicking prompt 1.', 'chatkit-wp'); ?></p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><label for="chatkit_default_prompt_2"><?php _e('Default Prompt 2 (Label)', 'chatkit-wp'); ?></label></td>
+                                    <td><label for="chatkit_default_prompt_2"><?php esc_html_e('Default Prompt 2 (Label)', 'chatkit-wp'); ?></label></td>
                                     <td><input type="text" id="chatkit_default_prompt_2" name="chatkit_default_prompt_2"
                                                value="<?php echo esc_attr($default_prompt_2); ?>"
                                                class="regular-text">
-                                        <p class="description"><?php _e('(Optional) Label for the second quick question.', 'chatkit-wp'); ?></p>
+                                        <p class="description"><?php esc_html_e('(Optional) Label for the second quick question.', 'chatkit-wp'); ?></p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><label for="chatkit_default_prompt_2_text"><?php _e('Default Prompt 2 (Sent Text)', 'chatkit-wp'); ?></label></td>
+                                    <td><label for="chatkit_default_prompt_2_text"><?php esc_html_e('Default Prompt 2 (Sent Text)', 'chatkit-wp'); ?></label></td>
                                     <td><input type="text" id="chatkit_default_prompt_2_text" name="chatkit_default_prompt_2_text"
                                                value="<?php echo esc_attr($default_prompt_2_text); ?>"
                                                class="regular-text">
-                                        <p class="description"><?php _e('(Optional) Text sent for prompt 2.', 'chatkit-wp'); ?></p>
+                                        <p class="description"><?php esc_html_e('(Optional) Text sent for prompt 2.', 'chatkit-wp'); ?></p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><label for="chatkit_default_prompt_3"><?php _e('Default Prompt 3 (Label)', 'chatkit-wp'); ?></label></td>
+                                    <td><label for="chatkit_default_prompt_3"><?php esc_html_e('Default Prompt 3 (Label)', 'chatkit-wp'); ?></label></td>
                                     <td><input type="text" id="chatkit_default_prompt_3" name="chatkit_default_prompt_3"
                                                value="<?php echo esc_attr($default_prompt_3); ?>"
                                                class="regular-text">
-                                        <p class="description"><?php _e('(Optional) Label for the third quick question.', 'chatkit-wp'); ?></p>
+                                        <p class="description"><?php esc_html_e('(Optional) Label for the third quick question.', 'chatkit-wp'); ?></p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><label for="chatkit_default_prompt_3_text"><?php _e('Default Prompt 3 (Sent Text)', 'chatkit-wp'); ?></label></td>
+                                    <td><label for="chatkit_default_prompt_3_text"><?php esc_html_e('Default Prompt 3 (Sent Text)', 'chatkit-wp'); ?></label></td>
                                     <td><input type="text" id="chatkit_default_prompt_3_text" name="chatkit_default_prompt_3_text"
                                                value="<?php echo esc_attr($default_prompt_3_text); ?>"
                                                class="regular-text">
-                                        <p class="description"><?php _e('(Optional) Text sent for prompt 3.', 'chatkit-wp'); ?></p>
+                                        <p class="description"><?php esc_html_e('(Optional) Text sent for prompt 3.', 'chatkit-wp'); ?></p>
                                     </td>
                                 </tr>
                             </table>
@@ -373,25 +378,26 @@ class ChatKit_WordPress {
 
             <hr>
 
-            <h2><?php _e('Test Configuration', 'chatkit-wp'); ?></h2>
+            <h2><?php esc_html_e('Test Configuration', 'chatkit-wp'); ?></h2>
             <div id="chatkit-test-result" style="margin-top: 15px;"></div>
             <button type="button" class="button button-secondary" id="chatkit-test-btn">
-                <?php _e('🔍 Test API Connection', 'chatkit-wp'); ?>
+                🔍 <?php esc_html_e('Test API Connection', 'chatkit-wp'); ?>
             </button>
 
             <script>
             document.getElementById('chatkit-test-btn').addEventListener('click', async () => {
                 const resultDiv = document.getElementById('chatkit-test-result');
                 const btn = document.getElementById('chatkit-test-btn');
+                const originalText = btn.textContent;
                 btn.disabled = true;
-                btn.textContent = '⏳ Testing...';
+                btn.textContent = '⏳ <?php echo esc_js(__('Testing...', 'chatkit-wp')); ?>';
 
                 try {
-                    const response = await fetch('<?php echo rest_url('chatkit/v1/test'); ?>', {
+                    const response = await fetch(<?php echo wp_json_encode(rest_url('chatkit/v1/test')); ?>, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-WP-Nonce': '<?php echo wp_create_nonce('wp_rest'); ?>'
+                            'X-WP-Nonce': <?php echo wp_json_encode(wp_create_nonce('wp_rest')); ?>
                         }
                     });
 
@@ -406,7 +412,7 @@ class ChatKit_WordPress {
                     resultDiv.innerHTML = '<div class="notice notice-error inline"><p>❌ Error: ' + error.message + '</p></div>';
                 } finally {
                     btn.disabled = false;
-                    btn.textContent = '🔍 Test API Connection';
+                    btn.textContent = originalText;
                 }
             });
             </script>
@@ -431,11 +437,11 @@ class ChatKit_WordPress {
     }
 
     public function create_session(\WP_REST_Request $request) {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $ip = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP) ?: 'unknown';
         $transient_key = 'chatkit_ratelimit_' . md5($ip);
         $requests = get_transient($transient_key) ?: 0;
 
-        if ($requests > 10) {
+        if ($requests > 30 && !current_user_can('manage_options')) {
             return new \WP_Error(
                 'rate_limit_exceeded',
                 __('Too many requests. Please try again in a minute.', 'chatkit-wp'),
@@ -527,11 +533,11 @@ class ChatKit_WordPress {
         $status_code = wp_remote_retrieve_response_code($response);
 
         if ($status_code === 200) {
-            return rest_ensure_response(['message' => __('✅ Connection successful! Plugin is correctly configured.', 'chatkit-wp')]);
-        } else {
-            $body = wp_remote_retrieve_body($response);
-            return new \WP_Error('api_error', sprintf(__('API Error (status %d): %s', 'chatkit-wp'), $status_code, $body), ['status' => $status_code]);
+            return rest_ensure_response(['message' => __('Connection successful! Plugin is correctly configured.', 'chatkit-wp')]);
         }
+
+        $body = wp_remote_retrieve_body($response);
+        return new \WP_Error('api_error', sprintf(__('API Error (status %d): %s', 'chatkit-wp'), $status_code, $body), ['status' => $status_code]);
     }
 
     public function enqueue_frontend_assets() {
@@ -550,19 +556,21 @@ class ChatKit_WordPress {
             CHATKIT_WP_VERSION
         );
 
+        $options = $this->get_all_options();
+
         wp_localize_script('chatkit-embed', 'chatkitConfig', [
             'restUrl' => rest_url('chatkit/v1/session'),
-            'accentColor' => get_option('chatkit_accent_color', '#FF4500'),
-            'themeMode' => get_option('chatkit_theme_mode', 'dark'),
-            'enableAttachments' => get_option('chatkit_enable_attachments', false),
-            'buttonText' => get_option('chatkit_button_text', __('Chat now', 'chatkit-wp')),
-            'greetingText' => get_option('chatkit_greeting_text', __('How can I help you today?', 'chatkit-wp')),
-            'defaultPrompt1' => get_option('chatkit_default_prompt_1', __('How can I assist you?', 'chatkit-wp')),
-            'defaultPrompt1Text' => get_option('chatkit_default_prompt_1_text', __('Hi! How can I assist you today?', 'chatkit-wp')),
-            'defaultPrompt2' => get_option('chatkit_default_prompt_2', ''),
-            'defaultPrompt2Text' => get_option('chatkit_default_prompt_2_text', ''),
-            'defaultPrompt3' => get_option('chatkit_default_prompt_3', ''),
-            'defaultPrompt3Text' => get_option('chatkit_default_prompt_3_text', ''),
+            'accentColor' => $options['accent_color'],
+            'themeMode' => $options['theme_mode'],
+            'enableAttachments' => $options['enable_attachments'],
+            'buttonText' => $options['button_text'],
+            'greetingText' => $options['greeting_text'],
+            'defaultPrompt1' => $options['default_prompt_1'],
+            'defaultPrompt1Text' => $options['default_prompt_1_text'],
+            'defaultPrompt2' => $options['default_prompt_2'],
+            'defaultPrompt2Text' => $options['default_prompt_2_text'],
+            'defaultPrompt3' => $options['default_prompt_3'],
+            'defaultPrompt3Text' => $options['default_prompt_3_text'],
         ]);
     }
 
@@ -571,6 +579,9 @@ class ChatKit_WordPress {
             'button_text' => get_option('chatkit_button_text', __('Chat now', 'chatkit-wp')),
             'accent_color' => get_option('chatkit_accent_color', '#FF4500'),
         ], $atts, 'openai_chatkit');
+
+        $atts['button_text'] = sanitize_text_field($atts['button_text']);
+        $atts['accent_color'] = sanitize_hex_color($atts['accent_color']) ?: '#FF4500';
 
         ob_start();
         ?>
@@ -610,11 +621,26 @@ class ChatKit_WordPress {
         $cookie_name = 'chatkit_user_id';
 
         if (isset($_COOKIE[$cookie_name])) {
-            return sanitize_text_field($_COOKIE[$cookie_name]);
+            $user_id = sanitize_text_field($_COOKIE[$cookie_name]);
+            if (preg_match('/^user_[a-zA-Z0-9]{16}$/', $user_id)) {
+                return $user_id;
+            }
         }
 
         $user_id = 'user_' . wp_generate_password(16, false);
-        setcookie($cookie_name, $user_id, time() + (86400 * 30), COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true);
+        
+        if (PHP_VERSION_ID >= 70300) {
+            setcookie($cookie_name, $user_id, [
+                'expires' => time() + (86400 * 30),
+                'path' => COOKIEPATH,
+                'domain' => COOKIE_DOMAIN,
+                'secure' => is_ssl(),
+                'httponly' => true,
+                'samesite' => 'Strict'
+            ]);
+        } else {
+            setcookie($cookie_name, $user_id, time() + (86400 * 30), COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true);
+        }
 
         return $user_id;
     }
