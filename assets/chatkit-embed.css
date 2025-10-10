@@ -1,10 +1,20 @@
 /* ChatKit WordPress Plugin - Frontend Styles */
 
+:root {
+  --chatkit-z-index-button: 9999;
+  --chatkit-z-index-modal: 9998;
+  --chatkit-border-radius: 16px;
+  --chatkit-transition-speed: 0.2s;
+  --chatkit-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --chatkit-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.25);
+  --chatkit-bottom-spacing: 20px; /* FIX: Variabile per controllare lo spacing */
+}
+
 #chatToggleBtn {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 999999;
+  bottom: var(--chatkit-bottom-spacing); /* FIX: Usa variabile invece di 20px fisso */
+  right: var(--chatkit-bottom-spacing);
+  z-index: var(--chatkit-z-index-button);
   padding: 12px 20px;
   color: white;
   border: none;
@@ -12,10 +22,12 @@
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  transition: all 0.2s ease;
+  box-shadow: var(--chatkit-shadow-sm);
+  transition: all var(--chatkit-transition-speed) ease;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 #chatToggleBtn:hover {
@@ -33,6 +45,11 @@
   outline-offset: 2px;
 }
 
+#chatToggleBtn:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 3px;
+}
+
 #chatToggleBtn[aria-expanded="true"],
 #chatToggleBtn.chatkit-open {
   background-color: #dc3545 !important;
@@ -41,16 +58,19 @@
 
 #myChatkit {
   position: fixed;
-  bottom: 80px;
-  right: 20px;
+  bottom: calc(var(--chatkit-bottom-spacing) + 50px); /* FIX: Distanza dal button più precisa */
+  right: var(--chatkit-bottom-spacing);
   width: 400px;
   height: 600px;
-  max-height: calc(100vh - 140px);
-  z-index: 999998;
+  max-height: calc(100vh - 120px); /* FIX: Ridotto da 140px */
+  z-index: var(--chatkit-z-index-modal);
   display: none;
   overflow: hidden;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  border-radius: var(--chatkit-border-radius);
+  box-shadow: var(--chatkit-shadow-lg);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 #myChatkit openai-chatkit {
@@ -70,10 +90,32 @@
   }
 }
 
+/* Overlay per modal su mobile */
+#myChatkit[aria-modal="true"]::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+  animation: fadeIn 0.3s ease;
+  display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Mobile Styles */
 @media (max-width: 768px) {
+  :root {
+    --chatkit-bottom-spacing: 16px; /* FIX: Spacing ridotto su mobile */
+  }
+
   #chatToggleBtn {
-    bottom: 16px;
-    right: 16px;
     padding: 10px 16px;
     font-size: 14px;
   }
@@ -81,11 +123,16 @@
   #myChatkit {
     left: 12px;
     right: 12px;
-    bottom: 70px;
+    bottom: calc(var(--chatkit-bottom-spacing) + 55px); /* FIX: Più vicino al button */
     width: auto;
-    height: 75vh;
-    max-height: 75vh;
+    height: 70vh; /* FIX: Altezza ridotta su mobile */
+    max-height: 70vh;
     border-radius: 12px;
+  }
+
+  /* Mostra overlay su mobile quando aperto */
+  #myChatkit[aria-modal="true"]::before {
+    display: block;
   }
 }
 
@@ -97,9 +144,11 @@
 }
 
 @media (max-width: 480px) {
+  :root {
+    --chatkit-bottom-spacing: 12px; /* FIX: Ancora più ridotto su schermi piccoli */
+  }
+
   #chatToggleBtn {
-    bottom: 12px;
-    right: 12px;
     padding: 8px 14px;
     font-size: 13px;
   }
@@ -107,12 +156,13 @@
   #myChatkit {
     left: 8px;
     right: 8px;
-    bottom: 60px;
-    height: 70vh;
+    bottom: calc(var(--chatkit-bottom-spacing) + 50px);
+    height: 65vh; /* FIX: Ancora più compatto */
     border-radius: 10px;
   }
 }
 
+/* Box-sizing globale */
 #chatToggleBtn,
 #myChatkit {
   box-sizing: border-box;
@@ -123,24 +173,18 @@
   box-sizing: border-box;
 }
 
-body.admin-bar #chatToggleBtn {
-  bottom: 52px;
-}
-
-body.admin-bar #myChatkit {
-  bottom: 112px;
+/* WordPress admin bar compatibility */
+body.admin-bar {
+  --chatkit-bottom-spacing: 52px; /* FIX: Aumentato per admin bar */
 }
 
 @media screen and (max-width: 782px) {
-  body.admin-bar #chatToggleBtn {
-    bottom: 66px;
-  }
-  
-  body.admin-bar #myChatkit {
-    bottom: 126px;
+  body.admin-bar {
+    --chatkit-bottom-spacing: 66px;
   }
 }
 
+/* Accessibilità: Riduzione movimento */
 @media (prefers-reduced-motion: reduce) {
   #chatToggleBtn,
   #myChatkit {
@@ -156,12 +200,78 @@ body.admin-bar #myChatkit {
   }
 }
 
+/* Alto contrasto */
 @media (prefers-contrast: high) {
   #chatToggleBtn {
     border: 2px solid currentColor;
   }
   
   #myChatkit {
-    border: 1px solid currentColor;
+    border: 2px solid currentColor;
+  }
+  
+  #chatToggleBtn:focus,
+  #chatToggleBtn:focus-visible {
+    outline: 3px solid;
+    outline-offset: 3px;
+  }
+}
+
+/* Dark mode nativo */
+@media (prefers-color-scheme: dark) {
+  #chatToggleBtn {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+  
+  #myChatkit {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* Stampa - nascondi widget */
+@media print {
+  #chatToggleBtn,
+  #myChatkit {
+    display: none !important;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  #myChatkit {
+    height: 80vh; /* FIX: Ottimizzato per landscape */
+    max-height: 80vh;
+  }
+}
+
+/* Schermi molto grandi */
+@media (min-width: 1921px) {
+  #myChatkit {
+    width: 450px;
+    height: 650px; /* FIX: Leggermente più alto su schermi grandi */
+  }
+}
+
+/* FIX: Animazione smooth per apertura */
+#myChatkit[style*="display: block"] {
+  animation: chatkit-slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* FIX: Stato hover migliorato per button */
+#chatToggleBtn:not(.chatkit-open):hover {
+  transform: translateY(-3px) scale(1.02);
+}
+
+/* FIX: Gestione focus per accessibilità */
+#chatToggleBtn:focus-visible {
+  animation: pulse-focus 2s infinite;
+}
+
+@keyframes pulse-focus {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 0 0 4px rgba(255, 255, 255, 0.3);
   }
 }
