@@ -6,6 +6,14 @@
   let retryCount = 0;
   const MAX_RETRIES = 3;
 
+  // Helper to convert WordPress boolean strings to actual booleans
+  function toBool(value) {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') return value === '1' || value.toLowerCase() === 'true';
+    if (typeof value === 'number') return value === 1;
+    return !!value;
+  }
+
   function loadChatkitScript() {
     return new Promise((resolve, reject) => {
       if (customElements.get('openai-chatkit')) {
@@ -24,17 +32,14 @@
 
   async function getClientSecret() {
     try {
-      // Validazione config
       if (!config.restUrl) {
         throw new Error('Missing configuration');
       }
 
-      // Headers base per la richiesta
       const headers = {
         'Content-Type': 'application/json'
       };
 
-      // Timeout per la richiesta
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -42,7 +47,7 @@
         method: 'POST',
         headers: headers,
         signal: controller.signal,
-        credentials: 'same-origin' // Include cookies
+        credentials: 'same-origin'
       });
 
       clearTimeout(timeoutId);
@@ -81,7 +86,6 @@
         el.parentNode.insertBefore(errorDiv, el);
       }
 
-      // Analytics opzionale
       if (typeof gtag !== 'undefined') {
         gtag('event', 'exception', {
           description: 'ChatKit session error: ' + error.message,
@@ -103,6 +107,8 @@
     }
 
     const originalText = button.textContent || config.buttonText || 'Chat now';
+    const closeText = config.closeText || '✕';
+    const accentColor = config.accentColor || '#FF4500';
 
     button.addEventListener('click', () => {
       isOpen = !isOpen;
@@ -112,34 +118,30 @@
       
       if (isOpen) {
         button.classList.add('chatkit-open');
-        button.textContent = '✕'; // FIX: Carattere unicode corretto
+        button.textContent = closeText;
+        button.style.backgroundColor = accentColor;
         chatkit.style.animation = 'chatkit-slide-up 0.3s ease-out';
         
-        // Focus management
         setTimeout(() => chatkit.focus(), 100);
         
-        // Impedisci scroll body su mobile
         if (window.innerWidth <= 768) {
           document.body.style.overflow = 'hidden';
         }
       } else {
         button.classList.remove('chatkit-open');
         button.textContent = originalText;
+        button.style.backgroundColor = accentColor;
         button.focus();
-        
-        // Ripristina scroll
         document.body.style.overflow = '';
       }
     });
 
-    // Gestione ESC key per accessibilità
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && isOpen) {
         button.click();
       }
     });
 
-    // Chiudi al click fuori (opzionale)
     document.addEventListener('click', (e) => {
       if (isOpen && 
           !chatkit.contains(e.target) && 
@@ -152,35 +154,55 @@
   function buildPrompts() {
     const prompts = [];
 
-    if (config.defaultPrompt1 && config.defaultPrompt1Text) {
+    // Support for new array format
+    if (config.prompts && Array.isArray(config.prompts) && config.prompts.length > 0) {
+      config.prompts.forEach(prompt => {
+        if (prompt && prompt.label && prompt.text) {
+          prompts.push({
+            icon: prompt.icon || 'circle-question',
+            label: prompt.label,
+            prompt: prompt.text
+          });
+        }
+      });
+    } 
+    // Fallback to old format
+    else {
+      if (config.defaultPrompt1 && config.defaultPrompt1Text) {
+        prompts.push({
+          icon: 'circle-question',
+          label: config.defaultPrompt1,
+          prompt: config.defaultPrompt1Text
+        });
+      }
+
+      if (config.defaultPrompt2 && config.defaultPrompt2Text) {
+        prompts.push({
+          icon: 'circle-question',
+          label: config.defaultPrompt2,
+          prompt: config.defaultPrompt2Text
+        });
+      }
+
+      if (config.defaultPrompt3 && config.defaultPrompt3Text) {
+        prompts.push({
+          icon: 'circle-question',
+          label: config.defaultPrompt3,
+          prompt: config.defaultPrompt3Text
+        });
+      }
+    }
+
+    // Fallback default
+    if (prompts.length === 0) {
       prompts.push({
         icon: 'circle-question',
-        label: config.defaultPrompt1,
-        prompt: config.defaultPrompt1Text
+        label: 'How can I assist you?',
+        prompt: 'Hi! How can I assist you today?'
       });
     }
 
-    if (config.defaultPrompt2 && config.defaultPrompt2Text) {
-      prompts.push({
-        icon: 'circle-question',
-        label: config.defaultPrompt2,
-        prompt: config.defaultPrompt2Text
-      });
-    }
-
-    if (config.defaultPrompt3 && config.defaultPrompt3Text) {
-      prompts.push({
-        icon: 'circle-question',
-        label: config.defaultPrompt3,
-        prompt: config.defaultPrompt3Text
-      });
-    }
-
-    return prompts.length > 0 ? prompts : [{
-      icon: 'circle-question',
-      label: config.defaultPrompt1 || 'How can I assist you?',
-      prompt: config.defaultPrompt1Text || 'Hi! How can I assist you today?'
-    }];
+    return prompts;
   }
 
   function showUserError(message) {
@@ -201,7 +223,6 @@
 
   async function initChatKit() {
     try {
-      // Validazione config iniziale
       if (!config.restUrl) {
         console.error('ChatKit configuration missing: restUrl not defined');
         const errorMsg = config.i18n?.configError || '⚠️ Chat configuration error. Please contact support.';
@@ -232,20 +253,31 @@
 
       setupToggle();
 
-      chatkitElement.setOptions({
+      console.log('📋 ChatKit Config Received:', {
+        showHeader: config.showHeader,
+        headerTitleText: config.headerTitleText,
+        historyEnabled: config.historyEnabled,
+        enableAttachments: config.enableAttachments,
+        disclaimerText: config.disclaimerText ? 'Set' : 'Not set'
+      });
+
+      // ✅ BUILD BASE OPTIONS with SAFE values
+      const options = {
         api: {
           getClientSecret: getClientSecret
         },
         theme: {
           colorScheme: config.themeMode || 'dark',
+          // ✅ ALWAYS FIXED (CSS handles visual customization)
+          radius: 'round',
+          density: 'normal',
           color: {
             accent: {
               primary: config.accentColor || '#FF4500',
-              level: 2
+              level: parseInt(config.accentLevel) || 2
             }
           },
-          radius: 'round',
-          density: 'normal',
+          // ✅ ALWAYS present (will be overridden if custom)
           typography: {
             baseSize: 16,
             fontFamily: '"OpenAI Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
@@ -253,18 +285,137 @@
         },
         composer: {
           attachments: {
-            enabled: config.enableAttachments === true
-          }
+            enabled: toBool(config.enableAttachments)
+          },
+          placeholder: config.placeholderText || 'Send a message...'
         },
         startScreen: {
           greeting: config.greetingText || 'How can I help you today?',
           prompts: buildPrompts()
         }
-      });
+      };
+
+      // ✅ FILE UPLOAD with extra params (if enabled)
+      if (toBool(config.enableAttachments)) {
+        try {
+          const maxSize = parseInt(config.attachmentMaxSize) || 20;
+          const maxCount = parseInt(config.attachmentMaxCount) || 3;
+          
+          options.composer.attachments = {
+            enabled: true,
+            maxSize: maxSize * 1024 * 1024,
+            maxCount: maxCount,
+            accept: {
+              'application/pdf': ['.pdf'],
+              'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
+              'text/plain': ['.txt']
+            }
+          };
+          
+          console.log('✅ Attachments enabled with params:', { maxSize: maxSize + 'MB', maxCount });
+        } catch (e) {
+          console.warn('Attachments config error, using basic mode:', e);
+        }
+      }
+
+      // ✅ INITIAL THREAD ID
+      if (config.initialThreadId && config.initialThreadId.trim() !== '') {
+        options.initialThread = config.initialThreadId;
+        console.log('✅ Initial thread set:', config.initialThreadId);
+      }
+
+      // ✅ DISCLAIMER
+      if (config.disclaimerText && config.disclaimerText.trim() !== '') {
+        options.disclaimer = {
+          text: config.disclaimerText,
+          highContrast: toBool(config.disclaimerHighContrast)
+        };
+        console.log('✅ Disclaimer configured');
+      }
+
+      // ✅ CUSTOM TYPOGRAPHY (overrides default)
+      if (config.customFont && config.customFont.fontFamily && config.customFont.fontFamily.trim() !== '') {
+        try {
+          options.theme.typography = {
+            fontFamily: config.customFont.fontFamily,
+            baseSize: parseInt(config.customFont.baseSize) || 16
+          };
+          console.log('✅ Custom typography applied');
+        } catch (e) {
+          console.warn('Typography config error, using default:', e);
+        }
+      }
+
+      // ✅ HEADER
+      if (toBool(config.showHeader)) {
+        const headerConfig = { enabled: true };
+        
+        // Custom title
+        if (config.headerTitleText && config.headerTitleText.trim() !== '') {
+          headerConfig.title = {
+            enabled: true,
+            text: config.headerTitleText
+          };
+          console.log('✅ Header custom title:', config.headerTitleText);
+        }
+        
+        // Left action button
+        if (config.headerLeftIcon && config.headerLeftUrl && config.headerLeftUrl.trim() !== '') {
+          try {
+            new URL(config.headerLeftUrl);
+            headerConfig.leftAction = {
+              icon: config.headerLeftIcon,
+              onClick: () => {
+                window.location.href = config.headerLeftUrl;
+              }
+            };
+            console.log('✅ Header left button configured:', config.headerLeftIcon);
+          } catch (e) {
+            console.warn('⚠️ Invalid left button URL, skipping');
+          }
+        }
+        
+        // Right action button
+        if (config.headerRightIcon && config.headerRightUrl && config.headerRightUrl.trim() !== '') {
+          try {
+            new URL(config.headerRightUrl);
+            headerConfig.rightAction = {
+              icon: config.headerRightIcon,
+              onClick: () => {
+                window.location.href = config.headerRightUrl;
+              }
+            };
+            console.log('✅ Header right button configured:', config.headerRightIcon);
+          } catch (e) {
+            console.warn('⚠️ Invalid right button URL, skipping');
+          }
+        }
+
+        options.header = headerConfig;
+        console.log('✅ Header enabled');
+      } else {
+        options.header = { enabled: false };
+        console.log('✅ Header disabled');
+      }
+
+      // ✅ HISTORY
+      options.history = { 
+        enabled: toBool(config.historyEnabled) 
+      };
+      console.log('✅ History:', toBool(config.historyEnabled) ? 'enabled' : 'disabled');
+
+      // ✅ LOCALE
+      if (config.locale && config.locale.trim() !== '') {
+        options.locale = config.locale;
+        console.log('✅ Locale set to:', config.locale);
+      }
+
+      // Initialize ChatKit
+      console.log('🚀 Initializing ChatKit with final config:', options);
+      chatkitElement.setOptions(options);
 
       console.log('✅ ChatKit initialized successfully');
 
-      // Analytics opzionale
       if (typeof gtag !== 'undefined') {
         gtag('event', 'chatkit_initialized', {
           event_category: 'engagement',
@@ -286,15 +437,12 @@
     }
   }
 
-  // Inizializzazione
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initChatKit);
   } else {
-    // Se il DOM è già carico, aspetta un tick
     setTimeout(initChatKit, 0);
   }
 
-  // Cleanup per evitare memory leaks
   window.addEventListener('beforeunload', () => {
     document.body.style.overflow = '';
   });
