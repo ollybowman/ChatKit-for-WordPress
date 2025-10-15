@@ -1,29 +1,20 @@
 /* ChatKit WordPress Plugin - Frontend Styles */
 
-:root {
-  --chatkit-z-index-button: 9999;
-  --chatkit-z-index-modal: 9998;
-  --chatkit-border-radius: 16px;
-  --chatkit-transition-speed: 0.2s;
-  --chatkit-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.15);
-  --chatkit-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.25);
-  --chatkit-bottom-spacing: 20px; /* FIX: Variabile per controllare lo spacing */
-}
-
+/* Button principale */
 #chatToggleBtn {
   position: fixed;
-  bottom: var(--chatkit-bottom-spacing); /* FIX: Usa variabile invece di 20px fisso */
-  right: var(--chatkit-bottom-spacing);
-  z-index: var(--chatkit-z-index-button);
+  bottom: 16px; /* FIX: Ridotto da 20px a 16px */
+  right: 16px; /* FIX: Ridotto da 20px a 16px */
+  z-index: 9999;
   padding: 12px 20px;
   color: white;
   border: none;
-  border-radius: 30px;
+  border-radius: 50px; /* FIX: Aumentato da 30px a 50px per essere più rotondo */
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--chatkit-shadow-sm);
-  transition: all var(--chatkit-transition-speed) ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1;
   -webkit-tap-highlight-color: transparent;
@@ -50,27 +41,25 @@
   outline-offset: 3px;
 }
 
+/* Stato aperto - mantiene stesso padding per restare rotondo */
 #chatToggleBtn[aria-expanded="true"],
 #chatToggleBtn.chatkit-open {
-  background-color: #dc3545 !important;
-  padding: 12px 18px;
+  /* Nessun cambio di padding - resta 12px 20px per mantenere forma rotonda */
 }
 
+/* Modal chat */
 #myChatkit {
   position: fixed;
-  bottom: calc(var(--chatkit-bottom-spacing) + 50px); /* FIX: Distanza dal button più precisa */
-  right: var(--chatkit-bottom-spacing);
+  bottom: 66px; /* FIX: 16px button + 50px height = 66px */
+  right: 16px; /* FIX: Allineato con button */
   width: 400px;
   height: 600px;
-  max-height: calc(100vh - 120px); /* FIX: Ridotto da 140px */
-  z-index: var(--chatkit-z-index-modal);
+  max-height: calc(100vh - 140px);
+  z-index: 9998;
   display: none;
   overflow: hidden;
-  border-radius: var(--chatkit-border-radius);
-  box-shadow: var(--chatkit-shadow-lg);
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
 #myChatkit openai-chatkit {
@@ -79,6 +68,7 @@
   display: block;
 }
 
+/* Animazione apertura */
 @keyframes chatkit-slide-up {
   from {
     opacity: 0;
@@ -90,8 +80,12 @@
   }
 }
 
-/* Overlay per modal su mobile */
-#myChatkit[aria-modal="true"]::before {
+#myChatkit[style*="display: block"] {
+  animation: chatkit-slide-up 0.3s ease-out;
+}
+
+/* Overlay mobile */
+#myChatkit::before {
   content: '';
   position: fixed;
   top: 0;
@@ -100,22 +94,16 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: -1;
-  animation: fadeIn 0.3s ease;
-  display: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Mobile Styles */
+/* Responsive Mobile */
 @media (max-width: 768px) {
-  :root {
-    --chatkit-bottom-spacing: 16px; /* FIX: Spacing ridotto su mobile */
-  }
-
   #chatToggleBtn {
+    bottom: 16px;
+    right: 16px;
     padding: 10px 16px;
     font-size: 14px;
   }
@@ -123,16 +111,17 @@
   #myChatkit {
     left: 12px;
     right: 12px;
-    bottom: calc(var(--chatkit-bottom-spacing) + 55px); /* FIX: Più vicino al button */
+    bottom: 70px;
     width: auto;
-    height: 70vh; /* FIX: Altezza ridotta su mobile */
-    max-height: 70vh;
+    height: 75vh;
+    max-height: 75vh;
     border-radius: 12px;
   }
 
   /* Mostra overlay su mobile quando aperto */
   #myChatkit[aria-modal="true"]::before {
-    display: block;
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 
@@ -144,11 +133,9 @@
 }
 
 @media (max-width: 480px) {
-  :root {
-    --chatkit-bottom-spacing: 12px; /* FIX: Ancora più ridotto su schermi piccoli */
-  }
-
   #chatToggleBtn {
+    bottom: 12px;
+    right: 12px;
     padding: 8px 14px;
     font-size: 13px;
   }
@@ -156,13 +143,13 @@
   #myChatkit {
     left: 8px;
     right: 8px;
-    bottom: calc(var(--chatkit-bottom-spacing) + 50px);
-    height: 65vh; /* FIX: Ancora più compatto */
+    bottom: 60px;
+    height: 70vh;
     border-radius: 10px;
   }
 }
 
-/* Box-sizing globale */
+/* Box-sizing fix per compatibilità temi */
 #chatToggleBtn,
 #myChatkit {
   box-sizing: border-box;
@@ -173,14 +160,22 @@
   box-sizing: border-box;
 }
 
-/* WordPress admin bar compatibility */
-body.admin-bar {
-  --chatkit-bottom-spacing: 52px; /* FIX: Aumentato per admin bar */
+/* WordPress Admin Bar compatibility */
+body.admin-bar #chatToggleBtn {
+  bottom: 52px;
+}
+
+body.admin-bar #myChatkit {
+  bottom: 112px;
 }
 
 @media screen and (max-width: 782px) {
-  body.admin-bar {
-    --chatkit-bottom-spacing: 66px;
+  body.admin-bar #chatToggleBtn {
+    bottom: 66px;
+  }
+  
+  body.admin-bar #myChatkit {
+    bottom: 126px;
   }
 }
 
@@ -239,8 +234,8 @@ body.admin-bar {
 /* Landscape mobile */
 @media (max-width: 768px) and (orientation: landscape) {
   #myChatkit {
-    height: 80vh; /* FIX: Ottimizzato per landscape */
-    max-height: 80vh;
+    height: 85vh;
+    max-height: 85vh;
   }
 }
 
@@ -248,30 +243,140 @@ body.admin-bar {
 @media (min-width: 1921px) {
   #myChatkit {
     width: 450px;
-    height: 650px; /* FIX: Leggermente più alto su schermi grandi */
+    height: 650px;
   }
 }
 
-/* FIX: Animazione smooth per apertura */
-#myChatkit[style*="display: block"] {
-  animation: chatkit-slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* === PERSONALIZZAZIONI DINAMICHE === */
+
+/* Button Size - Small */
+body[data-chatkit-button-size="small"] #chatToggleBtn {
+  padding: 8px 16px;
+  font-size: 13px;
 }
 
-/* FIX: Stato hover migliorato per button */
-#chatToggleBtn:not(.chatkit-open):hover {
-  transform: translateY(-3px) scale(1.02);
+/* Button Size - Large */
+body[data-chatkit-button-size="large"] #chatToggleBtn {
+  padding: 14px 24px;
+  font-size: 17px;
 }
 
-/* FIX: Gestione focus per accessibilità */
-#chatToggleBtn:focus-visible {
-  animation: pulse-focus 2s infinite;
+/* Button Position - Bottom Left */
+body[data-chatkit-position="bottom-left"] #chatToggleBtn {
+  left: 16px; /* FIX: Allineato con destra */
+  right: auto;
+  bottom: 16px;
+  top: auto;
 }
 
-@keyframes pulse-focus {
-  0%, 100% {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+body[data-chatkit-position="bottom-left"] #myChatkit {
+  left: 16px; /* FIX: Allineato con button */
+  right: auto;
+  bottom: 66px; /* FIX: Come destra */
+  top: auto;
+}
+
+/* Button Position - Top Right */
+body[data-chatkit-position="top-right"] #chatToggleBtn {
+  top: 16px; /* FIX: Ridotto */
+  bottom: auto;
+  right: 16px; /* FIX: Ridotto */
+  left: auto;
+}
+
+body[data-chatkit-position="top-right"] #myChatkit {
+  top: 66px; /* FIX: 16px + 50px */
+  bottom: auto;
+  right: 16px; /* FIX: Allineato */
+  left: auto;
+}
+
+/* Button Position - Top Left */
+body[data-chatkit-position="top-left"] #chatToggleBtn {
+  top: 16px; /* FIX: Ridotto */
+  bottom: auto;
+  left: 16px; /* FIX: Ridotto */
+  right: auto;
+}
+
+body[data-chatkit-position="top-left"] #myChatkit {
+  top: 66px; /* FIX: 16px + 50px */
+  bottom: auto;
+  left: 16px; /* FIX: Allineato */
+  right: auto;
+}
+
+/* Responsive per tutte le posizioni */
+@media (max-width: 768px) {
+  body[data-chatkit-position="bottom-left"] #chatToggleBtn {
+    left: 16px;
+    right: auto;
+    bottom: 16px;
   }
-  50% {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 0 0 4px rgba(255, 255, 255, 0.3);
+  
+  body[data-chatkit-position="bottom-left"] #myChatkit {
+    left: 12px;
+    right: 12px;
+    bottom: 70px;
   }
+  
+  body[data-chatkit-position="top-right"] #chatToggleBtn {
+    top: 16px;
+    right: 16px;
+  }
+  
+  body[data-chatkit-position="top-right"] #myChatkit {
+    left: 12px;
+    right: 12px;
+    top: 70px;
+    bottom: auto;
+  }
+  
+  body[data-chatkit-position="top-left"] #chatToggleBtn {
+    top: 16px;
+    left: 16px;
+  }
+  
+  body[data-chatkit-position="top-left"] #myChatkit {
+    left: 12px;
+    right: 12px;
+    top: 70px;
+    bottom: auto;
+  }
+}
+
+/* Border Radius - Square */
+body[data-chatkit-border-radius="square"] #chatToggleBtn {
+  border-radius: 8px;
+}
+
+body[data-chatkit-border-radius="square"] #myChatkit {
+  border-radius: 8px;
+}
+
+/* Border Radius - Extra Round */
+body[data-chatkit-border-radius="extra-round"] #chatToggleBtn {
+  border-radius: 50px;
+}
+
+body[data-chatkit-border-radius="extra-round"] #myChatkit {
+  border-radius: 24px;
+}
+
+/* Shadow Style - Subtle */
+body[data-chatkit-shadow="subtle"] #chatToggleBtn {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+body[data-chatkit-shadow="subtle"] #myChatkit {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Shadow Style - Bold */
+body[data-chatkit-shadow="bold"] #chatToggleBtn {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+
+body[data-chatkit-shadow="bold"] #myChatkit {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35);
 }
