@@ -2,7 +2,6 @@
   'use strict';
 
   const config = typeof chatkitConfig !== 'undefined' ? chatkitConfig : {};
-  let isOpen = false;
   let retryCount = 0;
   const MAX_RETRIES = 3;
 
@@ -95,60 +94,6 @@
 
       return null;
     }
-  }
-
-  function setupToggle() {
-    const button = document.getElementById('chatToggleBtn');
-    const chatkit = document.getElementById('myChatkit');
-
-    if (!button || !chatkit) {
-      console.warn('ChatKit toggle elements not found');
-      return;
-    }
-
-    const originalText = button.textContent || config.buttonText || 'Chat now';
-    const closeText = config.closeText || '✕';
-    const accentColor = config.accentColor || '#FF4500';
-
-    button.addEventListener('click', () => {
-      isOpen = !isOpen;
-      chatkit.style.display = isOpen ? 'block' : 'none';
-      button.setAttribute('aria-expanded', isOpen);
-      chatkit.setAttribute('aria-modal', isOpen);
-      
-      if (isOpen) {
-        button.classList.add('chatkit-open');
-        button.textContent = closeText;
-        button.style.backgroundColor = accentColor;
-        chatkit.style.animation = 'chatkit-slide-up 0.3s ease-out';
-        
-        setTimeout(() => chatkit.focus(), 100);
-        
-        if (window.innerWidth <= 768) {
-          document.body.style.overflow = 'hidden';
-        }
-      } else {
-        button.classList.remove('chatkit-open');
-        button.textContent = originalText;
-        button.style.backgroundColor = accentColor;
-        button.focus();
-        document.body.style.overflow = '';
-      }
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        button.click();
-      }
-    });
-
-    document.addEventListener('click', (e) => {
-      if (isOpen && 
-          !chatkit.contains(e.target) && 
-          !button.contains(e.target)) {
-        button.click();
-      }
-    });
   }
 
   function buildPrompts() {
@@ -250,8 +195,6 @@
         }
         return;
       }
-
-      setupToggle();
 
       console.log('📋 ChatKit Config Received:', {
         showHeader: config.showHeader,
@@ -412,6 +355,7 @@
 
       // Initialize ChatKit
       console.log('🚀 Initializing ChatKit with final config:', options);
+      chatkitElement.style.display = 'block';
       chatkitElement.setOptions(options);
 
       console.log('✅ ChatKit initialized successfully');
@@ -442,8 +386,4 @@
   } else {
     setTimeout(initChatKit, 0);
   }
-
-  window.addEventListener('beforeunload', () => {
-    document.body.style.overflow = '';
-  });
 })();
