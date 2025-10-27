@@ -120,12 +120,17 @@ final class Widget {
 
                 \ob_start();
                 ?>
-                <div class="chatkit-inline-container">
-                        <openai-chatkit id="myChatkit"
-                                role="region"
-                                aria-label="<?php echo \esc_attr__( 'Chat assistant', 'chatkit-wp' ); ?>"
-                                tabindex="-1"></openai-chatkit>
-                </div>
+                <button id="chatToggleBtn"
+                        type="button"
+                        aria-label="<?php echo \esc_attr__( 'Toggle chat window', 'chatkit-wp' ); ?>"
+                        aria-expanded="false"
+                        style="background-color: <?php echo \esc_attr( $atts['accent_color'] ); ?>;">
+                        <?php echo \esc_html( $atts['button_text'] ); ?>
+                </button>
+                <openai-chatkit id="myChatkit"
+                        role="dialog"
+                        aria-modal="false"
+                        aria-label="<?php echo \esc_attr__( 'Chat assistant', 'chatkit-wp' ); ?>"></openai-chatkit>
                 <?php
 
                 return (string) \ob_get_clean();

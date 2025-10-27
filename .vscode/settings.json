@@ -1,0 +1,27 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+
+  "phpSniffer.autoDetect": true,
+  "phpSniffer.standard": "phpcs.xml",
+  "phpSniffer.run": "onSave",
+
+  "phpstan.configFile": "phpstan.neon",
+  "phpstan.enabled": true,
+
+  "[php]": {
+    "editor.defaultFormatter": "wongjn.php-sniffer"
+  },
+
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": ".*\\.php$",
+        "cmd": "rsync -avz -e \"ssh -i ~/.ssh/id_rsa\" /Users/olly/valet-sites/photo-plugins/wp-content/plugins/OpenAI-ChatKit-for-WordPress rocksoli@rocksoliddesigns.co.uk:/home/rocksoli/plugintest/wp-content/plugins/",
+        "showOutput": true,
+        "message": "Deploying to production"
+      }
+    ]
+  },
+  "phpunit.phpunit": "vendor/bin/pest"
+}
