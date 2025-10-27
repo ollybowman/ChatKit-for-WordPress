@@ -371,6 +371,27 @@
                             </label>
                         </div>
                     </section>
+
+                    <section class="ck-card">
+                        <h2 class="ck-card__title"><?php esc_html_e( 'Attention nudge', 'chatkit-wp' ); ?></h2>
+                        <p class="ck-card__subtitle"><?php esc_html_e( 'Show a gentle prompt after the button sits idle for a while.', 'chatkit-wp' ); ?></p>
+                        <div class="ck-field-grid">
+                            <label class="ck-toggle">
+                                <input type="checkbox" name="chatkit_nudge_enabled" <?php checked( $nudge_enabled ?? true, true ); ?> />
+                                <span><?php esc_html_e( 'Display the nudge message automatically', 'chatkit-wp' ); ?></span>
+                            </label>
+                            <div class="ck-field">
+                                <label for="chatkit_nudge_message"><?php esc_html_e( 'Message text', 'chatkit-wp' ); ?></label>
+                                <input type="text" id="chatkit_nudge_message" name="chatkit_nudge_message" value="<?php echo esc_attr( $nudge_message ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Need a hand? Tap to chat or send us a quick email.', 'chatkit-wp' ); ?>">
+                            </div>
+                            <div class="ck-input-inline">
+                                <label for="chatkit_nudge_initial_delay"><?php esc_html_e( 'Initial delay (seconds)', 'chatkit-wp' ); ?></label>
+                                <input type="number" id="chatkit_nudge_initial_delay" name="chatkit_nudge_initial_delay" min="3" max="300" value="<?php echo esc_attr( (int) ( $nudge_initial_delay ?? 12 ) ); ?>">
+                                <label for="chatkit_nudge_repeat_delay"><?php esc_html_e( 'Repeat delay (seconds)', 'chatkit-wp' ); ?></label>
+                                <input type="number" id="chatkit_nudge_repeat_delay" name="chatkit_nudge_repeat_delay" min="10" max="600" value="<?php echo esc_attr( (int) ( $nudge_repeat_delay ?? 36 ) ); ?>">
+                            </div>
+                        </div>
+                    </section>
                 </div>
 
                 <div class="ck-admin-actions">

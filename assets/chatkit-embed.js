@@ -145,6 +145,14 @@
     const closeText = config.closeText || '✕';
     const accentColor = config.accentColor || '#FF4500';
     const containers = [chatkit, picker, emailPanel];
+    const nudge = document.getElementById('chatkitNudge');
+    const nudgeDismiss = nudge ? nudge.querySelector('.chatkit-nudge__dismiss') : null;
+    const nudgeConfig = config.nudge || {};
+    const NUDGE_ENABLED = Boolean(nudge && nudgeConfig.enabled);
+    const NUDGE_INITIAL_DELAY = Math.max(3, parseInt(nudgeConfig.initialDelay || 12, 10)) * 1000;
+    const NUDGE_REPEAT_DELAY = Math.max(10, parseInt(nudgeConfig.repeatDelay || 36, 10)) * 1000;
+    let nudgeTimer = null;
+    let nudgeDismissed = false;
 
     function toggleBodyScroll(lock) {
       if (lock) {
@@ -202,6 +210,9 @@
       button.style.backgroundColor = accentColor;
       button.setAttribute('aria-expanded', 'true');
       showView(initialView);
+      hideNudge();
+      clearTimeout(nudgeTimer);
+      nudgeTimer = null;
 
       if (window.innerWidth <= 768) {
         toggleBodyScroll(true);
@@ -217,6 +228,37 @@
       showView(null);
       button.focus();
       toggleBodyScroll(false);
+      scheduleNudge(NUDGE_REPEAT_DELAY);
+    }
+
+    const showNudge = () => {
+      if (!NUDGE_ENABLED || !nudge || isOpen || nudgeDismissed) {
+        return;
+      }
+      nudge.hidden = false;
+    };
+
+    const hideNudge = () => {
+      if (!nudge) {
+        return;
+      }
+      nudge.hidden = true;
+    };
+
+    const scheduleNudge = (delay = NUDGE_INITIAL_DELAY) => {
+      if (!NUDGE_ENABLED || !nudge || nudgeDismissed) {
+        return;
+      }
+
+      clearTimeout(nudgeTimer);
+      nudgeTimer = setTimeout(() => {
+        showNudge();
+        scheduleNudge(NUDGE_REPEAT_DELAY);
+      }, delay);
+    };
+
+    if (NUDGE_ENABLED) {
+      scheduleNudge();
     }
 
     button.addEventListener('click', () => {
@@ -293,6 +335,26 @@
         closePopup();
       }
     });
+
+    button.addEventListener('mouseenter', hideNudge);
+
+    if (nudge && NUDGE_ENABLED) {
+      nudge.addEventListener('click', (event) => {
+        if (event.target === nudgeDismiss) {
+          return;
+        }
+        openPopup('picker');
+      });
+    }
+
+    if (nudgeDismiss && NUDGE_ENABLED) {
+      nudgeDismiss.addEventListener('click', (event) => {
+        event.stopPropagation();
+        nudgeDismissed = true;
+        hideNudge();
+        clearTimeout(nudgeTimer);
+      });
+    }
   }
 
   function buildPrompts() {

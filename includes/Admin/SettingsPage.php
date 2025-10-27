@@ -245,29 +245,46 @@ final class SettingsPage {
                         }
                 }
 
-                $advanced_settings['enable_attachments'] = isset( $_POST['chatkit_enable_attachments'] );
+	                $advanced_settings['enable_attachments'] = isset( $_POST['chatkit_enable_attachments'] );
 
-                if ( isset( $_POST['chatkit_attachment_max_size'] ) ) {
-                        $max_size = (int) \absint( $_POST['chatkit_attachment_max_size'] );
-                        $max_size = max( 1, min( 100, $max_size ) );
-                        $advanced_settings['attachment_max_size'] = (string) $max_size;
-                }
+	                if ( isset( $_POST['chatkit_attachment_max_size'] ) ) {
+	                        $max_size = (int) \absint( $_POST['chatkit_attachment_max_size'] );
+	                        $max_size = max( 1, min( 100, $max_size ) );
+	                        $advanced_settings['attachment_max_size'] = (string) $max_size;
+	                }
 
-                if ( isset( $_POST['chatkit_attachment_max_count'] ) ) {
-                        $max_count = (int) \absint( $_POST['chatkit_attachment_max_count'] );
-                        $max_count = max( 1, min( 10, $max_count ) );
-                        $advanced_settings['attachment_max_count'] = (string) $max_count;
-                }
+	                if ( isset( $_POST['chatkit_attachment_max_count'] ) ) {
+	                        $max_count = (int) \absint( $_POST['chatkit_attachment_max_count'] );
+	                        $max_count = max( 1, min( 10, $max_count ) );
+	                        $advanced_settings['attachment_max_count'] = (string) $max_count;
+	                }
 
-                $advanced_settings['persistent_sessions'] = isset( $_POST['chatkit_persistent_sessions'] );
-                $advanced_settings['enable_model_picker'] = isset( $_POST['chatkit_enable_model_picker'] );
-                $advanced_settings['enable_tools']        = isset( $_POST['chatkit_enable_tools'] );
-                $advanced_settings['enable_entity_tags']  = isset( $_POST['chatkit_enable_entity_tags'] );
-                $advanced_settings['disclaimer_high_contrast'] = isset( $_POST['chatkit_disclaimer_high_contrast'] );
+	                $advanced_settings['persistent_sessions'] = isset( $_POST['chatkit_persistent_sessions'] );
+	                $advanced_settings['enable_model_picker'] = isset( $_POST['chatkit_enable_model_picker'] );
+	                $advanced_settings['enable_tools']        = isset( $_POST['chatkit_enable_tools'] );
+	                $advanced_settings['enable_entity_tags']  = isset( $_POST['chatkit_enable_entity_tags'] );
+	                $advanced_settings['disclaimer_high_contrast'] = isset( $_POST['chatkit_disclaimer_high_contrast'] );
+	                $advanced_settings['nudge_enabled']       = isset( $_POST['chatkit_nudge_enabled'] );
 
-                if ( isset( $_POST['chatkit_disclaimer_text'] ) ) {
-                        $advanced_settings['disclaimer_text'] = \sanitize_textarea_field( \wp_unslash( $_POST['chatkit_disclaimer_text'] ) );
-                }
+	                if ( isset( $_POST['chatkit_nudge_message'] ) ) {
+	                        $advanced_settings['nudge_message'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_nudge_message'] ) );
+	                }
+
+	                if ( isset( $_POST['chatkit_nudge_initial_delay'] ) ) {
+	                        $initial = (int) \absint( $_POST['chatkit_nudge_initial_delay'] );
+	                        $initial = max( 3, min( 300, $initial ) );
+	                        $advanced_settings['nudge_initial_delay'] = $initial;
+	                }
+
+	                if ( isset( $_POST['chatkit_nudge_repeat_delay'] ) ) {
+	                        $repeat = (int) \absint( $_POST['chatkit_nudge_repeat_delay'] );
+	                        $repeat = max( 10, min( 600, $repeat ) );
+	                        $advanced_settings['nudge_repeat_delay'] = $repeat;
+	                }
+
+	                if ( isset( $_POST['chatkit_disclaimer_text'] ) ) {
+	                        $advanced_settings['disclaimer_text'] = \sanitize_textarea_field( \wp_unslash( $_POST['chatkit_disclaimer_text'] ) );
+	                }
 
                 \update_option( 'chatkit_basic_settings', $basic_settings );
                 \update_option( 'chatkit_appearance_settings', $appearance_settings );

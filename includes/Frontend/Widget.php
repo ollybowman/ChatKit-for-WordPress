@@ -96,6 +96,12 @@ final class Widget {
 							'borderRadius'   => $options['border_radius'],
 							'shadowStyle'    => $options['shadow_style'],
 						],
+						'nudge'                  => [
+							'enabled'       => (bool) ( $options['nudge_enabled'] ?? true ),
+							'initialDelay'  => (int) ( $options['nudge_initial_delay'] ?? 12 ),
+							'repeatDelay'   => (int) ( $options['nudge_repeat_delay'] ?? 36 ),
+							'message'       => $options['nudge_message'] ?? '',
+						],
 						'i18n'                   => [
 							'unableToStart' => \__( 'Unable to start chat. Please try again later.', 'chatkit-wp' ),
 							'configError'   => \__( 'Chat configuration error. Please contact support.', 'chatkit-wp' ),
@@ -138,6 +144,17 @@ final class Widget {
 			style="background-color: <?php echo \esc_attr( $atts['accent_color'] ); ?>;">
 			<?php echo \esc_html( $atts['button_text'] ); ?>
 		</button>
+		<?php if ( ! empty( $options['nudge_enabled'] ) ) : ?>
+			<div id="chatkitNudge" class="chatkit-nudge" role="status" aria-live="polite" hidden>
+				<div class="chatkit-nudge__bubble">
+					<strong><?php echo \esc_html__( 'Need a hand?', 'chatkit-wp' ); ?></strong>
+					<span><?php echo esc_html( $options['nudge_message'] ?? '' ); ?></span>
+				</div>
+				<button type="button" class="chatkit-nudge__dismiss" aria-label="<?php echo \esc_attr__( 'Dismiss message', 'chatkit-wp' ); ?>">
+					×
+				</button>
+			</div>
+		<?php endif; ?>
 		<div id="chatkitChannelPicker" class="chatkit-channel-picker" hidden>
 			<div class="chatkit-channel-header">
 				<span class="chatkit-channel-title"><?php echo \esc_html__( 'Start a conversation', 'chatkit-wp' ); ?></span>
