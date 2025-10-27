@@ -38,10 +38,10 @@ if ( ! \defined( 'CHATKIT_WP_PLUGIN_URL' ) ) {
         \define( 'CHATKIT_WP_PLUGIN_URL', \plugin_dir_url( __FILE__ ) );
 }
 
-require_once CHATKIT_WP_PLUGIN_DIR . 'includes/Settings/Options.php';
-require_once CHATKIT_WP_PLUGIN_DIR . 'includes/Admin/SettingsPage.php';
-require_once CHATKIT_WP_PLUGIN_DIR . 'includes/Frontend/Widget.php';
-require_once CHATKIT_WP_PLUGIN_DIR . 'includes/Rest/ApiController.php';
+require_once CHATKIT_WP_PLUGIN_DIR . 'src/Settings/Options.php';
+require_once CHATKIT_WP_PLUGIN_DIR . 'src/Admin/SettingsPage.php';
+require_once CHATKIT_WP_PLUGIN_DIR . 'src/Frontend/Widget.php';
+require_once CHATKIT_WP_PLUGIN_DIR . 'src/Rest/ApiController.php';
 
 /**
  * Main plugin controller.

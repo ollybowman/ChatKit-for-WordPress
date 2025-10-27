@@ -6,12 +6,14 @@
   bottom: 16px; /* FIX: Ridotto da 20px a 16px */
   right: 16px; /* FIX: Ridotto da 20px a 16px */
   z-index: 9999;
-  padding: 12px 20px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
   color: white;
   border: none;
-  border-radius: 50px; /* FIX: Aumentato da 30px a 50px per essere più rotondo */
-  font-size: 15px;
-  font-weight: 700;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
@@ -45,6 +47,15 @@
 #chatToggleBtn[aria-expanded="true"],
 #chatToggleBtn.chatkit-open {
   /* Nessun cambio di padding - resta 12px 20px per mantenere forma rotonda */
+}
+
+.chatkit-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 26px;
 }
 
 .chatkit-attention {
@@ -255,6 +266,12 @@
   color: #dc3163;
 }
 
+.chatkit-card-icon svg {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
 .chatkit-card-icon--email {
   background: #fee2e2;
   color: #dc3163;
@@ -443,8 +460,9 @@
   #chatToggleBtn {
     bottom: 16px;
     right: 16px;
-    padding: 10px 16px;
-    font-size: 14px;
+    width: 52px;
+    height: 52px;
+    font-size: 22px;
   }
 
   .chatkit-channel-picker,
@@ -484,8 +502,9 @@
   #chatToggleBtn {
     bottom: 12px;
     right: 12px;
-    padding: 8px 14px;
-    font-size: 13px;
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
   }
 
   .chatkit-channel-picker,

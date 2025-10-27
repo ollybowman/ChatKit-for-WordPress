@@ -56,20 +56,20 @@ final class SettingsPage {
                         return;
                 }
 
-                \wp_enqueue_style(
-                        'chatkit-admin',
-                        CHATKIT_WP_PLUGIN_URL . 'assets/chatkit-admin.css',
-                        [],
-                        CHATKIT_WP_VERSION
-                );
+		\wp_enqueue_style(
+			'chatkit-admin',
+			CHATKIT_WP_PLUGIN_URL . 'src/sass/chatkit-admin.css',
+			[],
+			CHATKIT_WP_VERSION
+		);
 
-                \wp_enqueue_script(
-                        'chatkit-admin',
-                        CHATKIT_WP_PLUGIN_URL . 'assets/chatkit-admin.js',
-                        [],
-                        CHATKIT_WP_VERSION,
-                        true
-                );
+		\wp_enqueue_script(
+			'chatkit-admin',
+			CHATKIT_WP_PLUGIN_URL . 'src/js/chatkit-admin.js',
+			[],
+			CHATKIT_WP_VERSION,
+			true
+		);
 
                 \wp_localize_script(
                         'chatkit-admin',
@@ -103,7 +103,7 @@ final class SettingsPage {
                 $options = $this->options->get_all();
                 extract( $options, EXTR_SKIP );
 
-                require CHATKIT_WP_PLUGIN_DIR . 'admin/settings-page.php';
+		require CHATKIT_WP_PLUGIN_DIR . 'src/Views/settings-page.php';
         }
 
         /**

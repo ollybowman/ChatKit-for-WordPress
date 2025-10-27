@@ -36,20 +36,20 @@ final class Widget {
                         return;
                 }
 
-                \wp_enqueue_script(
-                        'chatkit-embed',
-                        CHATKIT_WP_PLUGIN_URL . 'assets/chatkit-embed.js',
-                        [],
-                        CHATKIT_WP_VERSION,
-                        true
-                );
+	\wp_enqueue_script(
+		'chatkit-embed',
+		CHATKIT_WP_PLUGIN_URL . 'src/js/chatkit-embed.js',
+		[],
+		CHATKIT_WP_VERSION,
+		true
+	);
 
-                \wp_enqueue_style(
-                        'chatkit-embed',
-                        CHATKIT_WP_PLUGIN_URL . 'assets/chatkit-embed.css',
-                        [],
-                        CHATKIT_WP_VERSION
-                );
+	\wp_enqueue_style(
+		'chatkit-embed',
+		CHATKIT_WP_PLUGIN_URL . 'src/sass/chatkit-embed.css',
+		[],
+		CHATKIT_WP_VERSION
+	);
 
                 $options        = $this->options->get_all();
                 $prompts_config = $this->options->build_default_prompts( $options );
@@ -142,7 +142,11 @@ final class Widget {
 			aria-label="<?php echo \esc_attr__( 'Toggle chat window', 'chatkit-wp' ); ?>"
 			aria-expanded="false"
 			style="background-color: <?php echo \esc_attr( $atts['accent_color'] ); ?>;">
-			<?php echo \esc_html( $atts['button_text'] ); ?>
+			<span class="chatkit-toggle-icon" aria-hidden="true">
+				<?php
+				echo file_get_contents( CHATKIT_WP_PLUGIN_DIR . 'assets/icons/message-square.svg' ); // phpcs:ignore WordPressVIPMinimum.Performance.FetchingRemoteData.file_get_contents
+				?>
+			</span>
 		</button>
 		<?php if ( ! empty( $options['nudge_enabled'] ) ) : ?>
 			<div id="chatkitNudge" class="chatkit-nudge" role="status" aria-live="polite" hidden>
@@ -162,7 +166,11 @@ final class Widget {
 			</div>
 			<div class="chatkit-channel-options">
 				<button class="chatkit-channel-card" type="button" data-channel="email">
-					<span class="chatkit-card-icon chatkit-card-icon--email" aria-hidden="true">✉️</span>
+					<span class="chatkit-card-icon chatkit-card-icon--email" aria-hidden="true">
+						<?php
+						echo file_get_contents( CHATKIT_WP_PLUGIN_DIR . 'assets/icons/mail.svg' ); // phpcs:ignore WordPressVIPMinimum.Performance.FetchingRemoteData.file_get_contents
+						?>
+					</span>
 					<span class="chatkit-card-content">
 						<strong><?php echo \esc_html__( 'Email', 'chatkit-wp' ); ?></strong>
 						<small><?php echo \esc_html__( 'No time to wait around? We usually respond within a few hours.', 'chatkit-wp' ); ?></small>
@@ -170,7 +178,11 @@ final class Widget {
 				</button>
 
 				<button class="chatkit-channel-card" type="button" data-channel="chat">
-					<span class="chatkit-card-icon chatkit-card-icon--chat" aria-hidden="true">💬</span>
+					<span class="chatkit-card-icon chatkit-card-icon--chat" aria-hidden="true">
+						<?php
+						echo file_get_contents( CHATKIT_WP_PLUGIN_DIR . 'assets/icons/bot.svg' ); // phpcs:ignore WordPressVIPMinimum.Performance.FetchingRemoteData.file_get_contents
+						?>
+					</span>
 					<span class="chatkit-card-content">
 						<strong><?php echo \esc_html__( 'Chat', 'chatkit-wp' ); ?></strong>
 						<small><?php echo \esc_html__( 'We\'re online right now—talk with our team in real-time.', 'chatkit-wp' ); ?></small>
