@@ -20,7 +20,7 @@ final class Widget {
          * Conditionally enqueue the front-end assets used by the widget.
          */
         public function enqueue_assets(): void {
-                $show_everywhere = (bool) \get_option( 'chatkit_show_everywhere', false );
+                $show_everywhere = $this->options->should_show_everywhere();
 
                 global $post;
 
@@ -106,10 +106,12 @@ final class Widget {
         public function render_shortcode( array $atts ): string {
                 $this->widget_loaded = true;
 
+                $options = $this->options->get_all();
+
                 $atts = \shortcode_atts(
                         [
-                                'button_text'  => \get_option( 'chatkit_button_text', \__( 'Chat now', 'chatkit-wp' ) ),
-                                'accent_color' => \get_option( 'chatkit_accent_color', '#FF4500' ),
+                                'button_text'  => $options['button_text'],
+                                'accent_color' => $options['accent_color'],
                         ],
                         $atts,
                         'openai_chatkit'
@@ -206,27 +208,29 @@ final class Widget {
          * Determine whether the widget should render automatically on the current page.
          */
         private function should_show_widget(): bool {
-                if ( ! \get_option( 'chatkit_show_everywhere', false ) ) {
+                $basic_settings = $this->options->get_basic_settings();
+
+                if ( empty( $basic_settings['show_everywhere'] ) ) {
                         return false;
                 }
 
-                if ( \is_front_page() && \get_option( 'chatkit_exclude_home', false ) ) {
+                if ( \is_front_page() && ! empty( $basic_settings['exclude_home'] ) ) {
                         return false;
                 }
 
-                if ( \is_archive() && \get_option( 'chatkit_exclude_archive', false ) ) {
+                if ( \is_archive() && ! empty( $basic_settings['exclude_archive'] ) ) {
                         return false;
                 }
 
-                if ( \is_search() && \get_option( 'chatkit_exclude_search', false ) ) {
+                if ( \is_search() && ! empty( $basic_settings['exclude_search'] ) ) {
                         return false;
                 }
 
-                if ( \is_404() && \get_option( 'chatkit_exclude_404', false ) ) {
+                if ( \is_404() && ! empty( $basic_settings['exclude_404'] ) ) {
                         return false;
                 }
 
-                $exclude_ids = \get_option( 'chatkit_exclude_ids', '' );
+                $exclude_ids = (string) ( $basic_settings['exclude_ids'] ?? '' );
 
                 if ( ! empty( $exclude_ids ) ) {
                         $excluded_array = array_map( 'trim', explode( ',', $exclude_ids ) );
