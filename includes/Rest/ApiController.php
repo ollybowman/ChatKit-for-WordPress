@@ -103,63 +103,12 @@ final class ApiController {
                 }
 
                 $session_id = $this->options->get_or_create_user_id();
-                $config     = $this->options->get_all();
+		$config     = $this->options->get_all();
 
-                $payload = [
-                        'workflow'              => [ 'id' => $workflow_id ],
-                        'user'                  => $session_id,
-                        'chatkit_configuration' => [
-                                'appearance'    => [
-                                        'accent_color' => $config['accent_color'],
-                                        'accent_level' => (int) $config['accent_level'],
-                                        'mode'         => $config['theme_mode'],
-                                        'locale'       => $config['locale'],
-                                ],
-                                'interactions'  => [
-                                        'default_prompts' => $this->options->build_default_prompts( $config ),
-                                        'greeting'         => $config['greeting_text'],
-                                        'placeholder'      => $config['placeholder_text'],
-                                ],
-                                'file_upload'   => [
-                                        'enabled'     => (bool) $config['enable_attachments'],
-                                        'max_file_mb' => (int) $config['attachment_max_size'],
-                                        'max_files'   => (int) $config['attachment_max_count'],
-                                ],
-                                'preferences'   => [
-                                        'persist_session' => (bool) $config['persistent_sessions'],
-                                        'initial_thread'  => $config['initial_thread_id'],
-                                ],
-                                'header'        => [
-                                        'visible'    => (bool) $config['show_header'],
-                                        'title'      => $config['header_title_text'],
-                                        'left_icon'  => $config['header_left_icon'],
-                                        'left_url'   => $config['header_left_url'],
-                                        'right_icon' => $config['header_right_icon'],
-                                        'right_url'  => $config['header_right_url'],
-                                ],
-                                'history'       => [ 'enabled' => (bool) $config['show_history'] ],
-                                'layout'        => [
-                                        'density'       => $config['density'],
-                                        'border_radius' => $config['border_radius'],
-                                        'shadow'        => $config['shadow_style'],
-                                ],
-                                'disclaimer'    => [
-                                        'content'       => $config['disclaimer_text'],
-                                        'high_contrast' => (bool) $config['disclaimer_high_contrast'],
-                                ],
-                                'custom_font'   => $config['enable_custom_font'] && ! empty( $config['font_family'] )
-                                        ? [
-                                                'family'    => $config['font_family'],
-                                                'base_size' => (int) $config['font_size'],
-                                        ]
-                                        : null,
-                                'feature_flags' => [
-                                        'entity_tags'  => (bool) $config['enable_entity_tags'],
-                                        'model_picker' => (bool) $config['enable_model_picker'],
-                                        'toolbox'      => (bool) $config['enable_tools'],
-                                ],
-                        ],
-                ];
+		$payload = [
+			'workflow' => [ 'id' => $workflow_id ],
+			'user'     => $session_id,
+		];
 
                 $response = \wp_remote_post(
                         'https://api.openai.com/v1/chatkit/sessions',
@@ -179,22 +128,54 @@ final class ApiController {
                         return new WP_Error( 'request_failed', $response->get_error_message(), [ 'status' => 502 ] );
                 }
 
-                $status_code = (int) \wp_remote_retrieve_response_code( $response );
-                $body        = json_decode( \wp_remote_retrieve_body( $response ), true );
+		$status_code = (int) \wp_remote_retrieve_response_code( $response );
+		$body_raw    = \wp_remote_retrieve_body( $response );
+		$body        = json_decode( $body_raw, true );
 
-                if ( 200 !== $status_code || ! isset( $body['client_secret'] ) ) {
-                        return new WP_Error(
-                                'invalid_response',
-                                \__( 'Error creating session', 'chatkit-wp' ),
-                                [ 'status' => $status_code ]
-                        );
-                }
+		if ( 200 !== $status_code || ! isset( $body['client_secret'] ) ) {
+			$error_message = '';
 
-                if ( ! empty( $body['chatkit_configuration']['file_upload']['enabled'] ) ) {
-                        \error_log( 'ChatKit: Session created with file upload enabled ✅' );
-                } else {
-                        \error_log( 'ChatKit: Session created WITHOUT file upload ❌' );
-                }
+			if ( is_array( $body ) ) {
+				if ( isset( $body['error']['message'] ) ) {
+					$error_message = (string) $body['error']['message'];
+				} elseif ( isset( $body['message'] ) ) {
+					$error_message = (string) $body['message'];
+				}
+			}
+
+			if ( '' === $error_message ) {
+				$error_message = \__( 'Unknown error returned by OpenAI.', 'chatkit-wp' );
+			}
+
+			\error_log(
+				sprintf(
+					'ChatKit session create failed (%d): %s',
+					$status_code,
+					$error_message
+				)
+			);
+
+			return new WP_Error(
+				'invalid_response',
+				sprintf(
+					/* translators: %s: Upstream error message returned by OpenAI */
+					\__( 'Error creating session: %s', 'chatkit-wp' ),
+					$error_message
+				),
+				[
+					'status'         => $status_code,
+					'response_body'  => $body_raw,
+					'response_error' => is_array( $body ) ? $body : null,
+				]
+			);
+		}
+
+		\error_log(
+			sprintf(
+				'ChatKit: Session created (attachments %s)',
+				$config['enable_attachments'] ? 'enabled ✅' : 'disabled ❌'
+			)
+		);
 
                 return \rest_ensure_response([
                         'client_secret' => $body['client_secret'],
