@@ -70,83 +70,167 @@ final class SettingsPage {
         private function handle_form_submission(): void {
                 \check_admin_referer( 'chatkit_settings_save' );
 
-                $text_fields = [
-                        'chatkit_api_key',
-                        'chatkit_workflow_id',
-                        'chatkit_button_text',
-                        'chatkit_close_text',
-                        'chatkit_theme_mode',
-                        'chatkit_greeting_text',
-                        'chatkit_placeholder_text',
-                        'chatkit_button_size',
-                        'chatkit_button_position',
-                        'chatkit_border_radius',
-                        'chatkit_shadow_style',
-                        'chatkit_density',
-                        'chatkit_locale',
-                        'chatkit_exclude_ids',
-                        'chatkit_accent_level',
-                        'chatkit_attachment_max_size',
-                        'chatkit_attachment_max_count',
-                        'chatkit_font_family',
-                        'chatkit_font_size',
-                        'chatkit_header_title_text',
-                        'chatkit_header_left_icon',
-                        'chatkit_header_left_url',
-                        'chatkit_header_right_icon',
-                        'chatkit_header_right_url',
-                        'chatkit_initial_thread_id',
-                        'chatkit_default_prompt_1',
-                        'chatkit_default_prompt_1_text',
-                        'chatkit_default_prompt_1_icon',
-                        'chatkit_default_prompt_2',
-                        'chatkit_default_prompt_2_text',
-                        'chatkit_default_prompt_2_icon',
-                        'chatkit_default_prompt_3',
-                        'chatkit_default_prompt_3_text',
-                        'chatkit_default_prompt_3_icon',
-                        'chatkit_default_prompt_4',
-                        'chatkit_default_prompt_4_text',
-                        'chatkit_default_prompt_4_icon',
-                        'chatkit_default_prompt_5',
-                        'chatkit_default_prompt_5_text',
-                        'chatkit_default_prompt_5_icon',
-                ];
+                $basic_settings      = $this->options->get_basic_settings();
+                $appearance_settings = $this->options->get_appearance_settings();
+                $messages_settings   = $this->options->get_messages_settings();
+                $advanced_settings   = $this->options->get_advanced_settings();
 
-                foreach ( $text_fields as $field ) {
-                        if ( isset( $_POST[ $field ] ) ) {
-                                \update_option( $field, \sanitize_text_field( \wp_unslash( $_POST[ $field ] ) ) );
-                        }
+                if ( isset( $_POST['chatkit_api_key'] ) ) {
+                        $basic_settings['api_key'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_api_key'] ) );
                 }
 
-                if ( isset( $_POST['chatkit_disclaimer_text'] ) ) {
-                        \update_option( 'chatkit_disclaimer_text', \sanitize_textarea_field( \wp_unslash( $_POST['chatkit_disclaimer_text'] ) ) );
+                if ( isset( $_POST['chatkit_workflow_id'] ) ) {
+                        $basic_settings['workflow_id'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_workflow_id'] ) );
+                }
+
+                $basic_settings['show_everywhere'] = isset( $_POST['chatkit_show_everywhere'] );
+                $basic_settings['exclude_home']    = isset( $_POST['chatkit_exclude_home'] );
+                $basic_settings['exclude_archive'] = isset( $_POST['chatkit_exclude_archive'] );
+                $basic_settings['exclude_search']  = isset( $_POST['chatkit_exclude_search'] );
+                $basic_settings['exclude_404']     = isset( $_POST['chatkit_exclude_404'] );
+
+                if ( isset( $_POST['chatkit_exclude_ids'] ) ) {
+                        $basic_settings['exclude_ids'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_exclude_ids'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_initial_thread_id'] ) ) {
+                        $basic_settings['initial_thread_id'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_initial_thread_id'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_button_text'] ) ) {
+                        $appearance_settings['button_text'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_button_text'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_close_text'] ) ) {
+                        $appearance_settings['close_text'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_close_text'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_theme_mode'] ) ) {
+                        $appearance_settings['theme_mode'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_theme_mode'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_button_size'] ) ) {
+                        $appearance_settings['button_size'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_button_size'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_button_position'] ) ) {
+                        $appearance_settings['button_position'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_button_position'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_border_radius'] ) ) {
+                        $appearance_settings['border_radius'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_border_radius'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_shadow_style'] ) ) {
+                        $appearance_settings['shadow_style'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_shadow_style'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_density'] ) ) {
+                        $appearance_settings['density'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_density'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_locale'] ) ) {
+                        $appearance_settings['locale'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_locale'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_accent_level'] ) ) {
+                        $appearance_settings['accent_level'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_accent_level'] ) );
                 }
 
                 if ( isset( $_POST['chatkit_accent_color'] ) ) {
-                        \update_option( 'chatkit_accent_color', \sanitize_hex_color( \wp_unslash( $_POST['chatkit_accent_color'] ) ) );
+                        $color = \sanitize_hex_color( \wp_unslash( $_POST['chatkit_accent_color'] ) );
+                        $appearance_settings['accent_color'] = $color ?: (string) $appearance_settings['accent_color'];
                 }
 
-                $boolean_fields = [
-                        'chatkit_enable_attachments',
-                        'chatkit_persistent_sessions',
-                        'chatkit_show_everywhere',
-                        'chatkit_exclude_home',
-                        'chatkit_exclude_archive',
-                        'chatkit_exclude_search',
-                        'chatkit_exclude_404',
-                        'chatkit_enable_model_picker',
-                        'chatkit_enable_tools',
-                        'chatkit_enable_entity_tags',
-                        'chatkit_enable_custom_font',
-                        'chatkit_show_header',
-                        'chatkit_show_history',
-                        'chatkit_disclaimer_high_contrast',
-                ];
+                $appearance_settings['enable_custom_font'] = isset( $_POST['chatkit_enable_custom_font'] );
 
-                foreach ( $boolean_fields as $field ) {
-                        \update_option( $field, isset( $_POST[ $field ] ) );
+                if ( isset( $_POST['chatkit_font_family'] ) ) {
+                        $appearance_settings['font_family'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_font_family'] ) );
                 }
+
+                if ( isset( $_POST['chatkit_font_size'] ) ) {
+                        $font_size = (int) \absint( $_POST['chatkit_font_size'] );
+                        $font_size = max( 12, min( 24, $font_size ) );
+                        $appearance_settings['font_size'] = (string) $font_size;
+                }
+
+                $appearance_settings['show_header']  = isset( $_POST['chatkit_show_header'] );
+                $appearance_settings['show_history'] = isset( $_POST['chatkit_show_history'] );
+
+                if ( isset( $_POST['chatkit_header_title_text'] ) ) {
+                        $appearance_settings['header_title_text'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_header_title_text'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_header_left_icon'] ) ) {
+                        $appearance_settings['header_left_icon'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_header_left_icon'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_header_left_url'] ) ) {
+                        $appearance_settings['header_left_url'] = \esc_url_raw( \wp_unslash( $_POST['chatkit_header_left_url'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_header_right_icon'] ) ) {
+                        $appearance_settings['header_right_icon'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_header_right_icon'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_header_right_url'] ) ) {
+                        $appearance_settings['header_right_url'] = \esc_url_raw( \wp_unslash( $_POST['chatkit_header_right_url'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_greeting_text'] ) ) {
+                        $messages_settings['greeting_text'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_greeting_text'] ) );
+                }
+
+                if ( isset( $_POST['chatkit_placeholder_text'] ) ) {
+                        $messages_settings['placeholder_text'] = \sanitize_text_field( \wp_unslash( $_POST['chatkit_placeholder_text'] ) );
+                }
+
+                for ( $i = 1; $i <= 5; $i++ ) {
+                        $label_key = "chatkit_default_prompt_{$i}";
+                        $text_key  = "chatkit_default_prompt_{$i}_text";
+                        $icon_key  = "chatkit_default_prompt_{$i}_icon";
+
+                        if ( isset( $_POST[ $label_key ] ) ) {
+                                $messages_settings[ "default_prompt_{$i}" ] = \sanitize_text_field( \wp_unslash( $_POST[ $label_key ] ) );
+                        }
+
+                        if ( isset( $_POST[ $text_key ] ) ) {
+                                $messages_settings[ "default_prompt_{$i}_text" ] = \sanitize_text_field( \wp_unslash( $_POST[ $text_key ] ) );
+                        }
+
+                        if ( isset( $_POST[ $icon_key ] ) ) {
+                                $messages_settings[ "default_prompt_{$i}_icon" ] = \sanitize_text_field( \wp_unslash( $_POST[ $icon_key ] ) );
+                        }
+                }
+
+                $advanced_settings['enable_attachments'] = isset( $_POST['chatkit_enable_attachments'] );
+
+                if ( isset( $_POST['chatkit_attachment_max_size'] ) ) {
+                        $max_size = (int) \absint( $_POST['chatkit_attachment_max_size'] );
+                        $max_size = max( 1, min( 100, $max_size ) );
+                        $advanced_settings['attachment_max_size'] = (string) $max_size;
+                }
+
+                if ( isset( $_POST['chatkit_attachment_max_count'] ) ) {
+                        $max_count = (int) \absint( $_POST['chatkit_attachment_max_count'] );
+                        $max_count = max( 1, min( 10, $max_count ) );
+                        $advanced_settings['attachment_max_count'] = (string) $max_count;
+                }
+
+                $advanced_settings['persistent_sessions'] = isset( $_POST['chatkit_persistent_sessions'] );
+                $advanced_settings['enable_model_picker'] = isset( $_POST['chatkit_enable_model_picker'] );
+                $advanced_settings['enable_tools']        = isset( $_POST['chatkit_enable_tools'] );
+                $advanced_settings['enable_entity_tags']  = isset( $_POST['chatkit_enable_entity_tags'] );
+                $advanced_settings['disclaimer_high_contrast'] = isset( $_POST['chatkit_disclaimer_high_contrast'] );
+
+                if ( isset( $_POST['chatkit_disclaimer_text'] ) ) {
+                        $advanced_settings['disclaimer_text'] = \sanitize_textarea_field( \wp_unslash( $_POST['chatkit_disclaimer_text'] ) );
+                }
+
+                \update_option( 'chatkit_basic_settings', $basic_settings );
+                \update_option( 'chatkit_appearance_settings', $appearance_settings );
+                \update_option( 'chatkit_messages_settings', $messages_settings );
+                \update_option( 'chatkit_advanced_settings', $advanced_settings );
 
                 $this->options->clear_cache();
 

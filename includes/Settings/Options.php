@@ -6,7 +6,9 @@ declare( strict_types=1 );
 
 namespace ChatkitWp\Settings;
 
+use function array_key_exists;
 use function array_map;
+use function array_merge;
 use function explode;
 use function headers_sent;
 use function in_array;
@@ -34,76 +36,190 @@ final class Options {
         private ?array $cache = null;
 
         /**
+         * Retrieve the grouped option schema and defaults.
+         *
+         * @return array<string, array<string, array<string, mixed>>>
+         */
+        private function get_option_schema(): array {
+                return [
+                        'chatkit_basic_settings'      => [
+                                'defaults' => [
+                                        'api_key'          => '',
+                                        'workflow_id'      => '',
+                                        'show_everywhere'  => false,
+                                        'exclude_ids'      => '',
+                                        'exclude_home'     => false,
+                                        'exclude_archive'  => false,
+                                        'exclude_search'   => false,
+                                        'exclude_404'      => false,
+                                        'initial_thread_id'=> '',
+                                ],
+                        ],
+                        'chatkit_appearance_settings' => [
+                                'defaults' => [
+                                        'accent_color'      => '#FF4500',
+                                        'accent_level'      => '2',
+                                        'button_text'       => \__( 'Chat now', 'chatkit-wp' ),
+                                        'close_text'        => '✕',
+                                        'theme_mode'        => 'dark',
+                                        'button_size'       => 'medium',
+                                        'button_position'   => 'bottom-right',
+                                        'border_radius'     => 'round',
+                                        'shadow_style'      => 'normal',
+                                        'density'           => 'normal',
+                                        'locale'            => '',
+                                        'enable_custom_font'=> false,
+                                        'font_family'       => '',
+                                        'font_size'         => '16',
+                                        'show_header'       => true,
+                                        'show_history'      => true,
+                                        'header_title_text' => '',
+                                        'header_left_icon'  => '',
+                                        'header_left_url'   => '',
+                                        'header_right_icon' => '',
+                                        'header_right_url'  => '',
+                                ],
+                        ],
+                        'chatkit_messages_settings'   => [
+                                'defaults' => [
+                                        'greeting_text'           => \__( 'How can I help you today?', 'chatkit-wp' ),
+                                        'placeholder_text'        => \__( 'Send a message...', 'chatkit-wp' ),
+                                        'default_prompt_1'        => \__( 'How can I assist you?', 'chatkit-wp' ),
+                                        'default_prompt_1_text'   => \__( 'Hi! How can I assist you today?', 'chatkit-wp' ),
+                                        'default_prompt_1_icon'   => 'circle-question',
+                                        'default_prompt_2'        => '',
+                                        'default_prompt_2_text'   => '',
+                                        'default_prompt_2_icon'   => 'circle-question',
+                                        'default_prompt_3'        => '',
+                                        'default_prompt_3_text'   => '',
+                                        'default_prompt_3_icon'   => 'circle-question',
+                                        'default_prompt_4'        => '',
+                                        'default_prompt_4_text'   => '',
+                                        'default_prompt_4_icon'   => 'circle-question',
+                                        'default_prompt_5'        => '',
+                                        'default_prompt_5_text'   => '',
+                                        'default_prompt_5_icon'   => 'circle-question',
+                                ],
+                        ],
+                        'chatkit_advanced_settings'   => [
+                                'defaults' => [
+                                        'enable_attachments'      => false,
+                                        'attachment_max_size'      => '20',
+                                        'attachment_max_count'     => '3',
+                                        'persistent_sessions'      => true,
+                                        'enable_model_picker'      => false,
+                                        'enable_tools'             => false,
+                                        'enable_entity_tags'       => false,
+                                        'disclaimer_text'          => '',
+                                        'disclaimer_high_contrast' => false,
+                                ],
+                        ],
+                ];
+        }
+
+        /**
+         * Mapping of grouped options to their legacy individual option names.
+         *
+         * @var array<string, array<string, string>>
+         */
+        private const LEGACY_OPTION_MAP = [
+                'chatkit_basic_settings'      => [
+                        'api_key'          => 'chatkit_api_key',
+                        'workflow_id'      => 'chatkit_workflow_id',
+                        'show_everywhere'  => 'chatkit_show_everywhere',
+                        'exclude_ids'      => 'chatkit_exclude_ids',
+                        'exclude_home'     => 'chatkit_exclude_home',
+                        'exclude_archive'  => 'chatkit_exclude_archive',
+                        'exclude_search'   => 'chatkit_exclude_search',
+                        'exclude_404'      => 'chatkit_exclude_404',
+                        'initial_thread_id'=> 'chatkit_initial_thread_id',
+                ],
+                'chatkit_appearance_settings' => [
+                        'accent_color'      => 'chatkit_accent_color',
+                        'accent_level'      => 'chatkit_accent_level',
+                        'button_text'       => 'chatkit_button_text',
+                        'close_text'        => 'chatkit_close_text',
+                        'theme_mode'        => 'chatkit_theme_mode',
+                        'button_size'       => 'chatkit_button_size',
+                        'button_position'   => 'chatkit_button_position',
+                        'border_radius'     => 'chatkit_border_radius',
+                        'shadow_style'      => 'chatkit_shadow_style',
+                        'density'           => 'chatkit_density',
+                        'locale'            => 'chatkit_locale',
+                        'enable_custom_font'=> 'chatkit_enable_custom_font',
+                        'font_family'       => 'chatkit_font_family',
+                        'font_size'         => 'chatkit_font_size',
+                        'show_header'       => 'chatkit_show_header',
+                        'show_history'      => 'chatkit_show_history',
+                        'header_title_text' => 'chatkit_header_title_text',
+                        'header_left_icon'  => 'chatkit_header_left_icon',
+                        'header_left_url'   => 'chatkit_header_left_url',
+                        'header_right_icon' => 'chatkit_header_right_icon',
+                        'header_right_url'  => 'chatkit_header_right_url',
+                ],
+                'chatkit_messages_settings'   => [
+                        'greeting_text'         => 'chatkit_greeting_text',
+                        'placeholder_text'      => 'chatkit_placeholder_text',
+                        'default_prompt_1'      => 'chatkit_default_prompt_1',
+                        'default_prompt_1_text' => 'chatkit_default_prompt_1_text',
+                        'default_prompt_1_icon' => 'chatkit_default_prompt_1_icon',
+                        'default_prompt_2'      => 'chatkit_default_prompt_2',
+                        'default_prompt_2_text' => 'chatkit_default_prompt_2_text',
+                        'default_prompt_2_icon' => 'chatkit_default_prompt_2_icon',
+                        'default_prompt_3'      => 'chatkit_default_prompt_3',
+                        'default_prompt_3_text' => 'chatkit_default_prompt_3_text',
+                        'default_prompt_3_icon' => 'chatkit_default_prompt_3_icon',
+                        'default_prompt_4'      => 'chatkit_default_prompt_4',
+                        'default_prompt_4_text' => 'chatkit_default_prompt_4_text',
+                        'default_prompt_4_icon' => 'chatkit_default_prompt_4_icon',
+                        'default_prompt_5'      => 'chatkit_default_prompt_5',
+                        'default_prompt_5_text' => 'chatkit_default_prompt_5_text',
+                        'default_prompt_5_icon' => 'chatkit_default_prompt_5_icon',
+                ],
+                'chatkit_advanced_settings'   => [
+                        'enable_attachments'      => 'chatkit_enable_attachments',
+                        'attachment_max_size'      => 'chatkit_attachment_max_size',
+                        'attachment_max_count'     => 'chatkit_attachment_max_count',
+                        'persistent_sessions'      => 'chatkit_persistent_sessions',
+                        'enable_model_picker'      => 'chatkit_enable_model_picker',
+                        'enable_tools'             => 'chatkit_enable_tools',
+                        'enable_entity_tags'       => 'chatkit_enable_entity_tags',
+                        'disclaimer_text'          => 'chatkit_disclaimer_text',
+                        'disclaimer_high_contrast' => 'chatkit_disclaimer_high_contrast',
+                ],
+        ];
+
+        /**
+         * Cached option groups to reduce database lookups.
+         *
+         * @var array<string, array<string, mixed>>
+         */
+        private array $group_cache = [];
+
+        /**
          * Retrieve the registry describing all plugin settings.
          *
          * @return array<string, array<string, mixed>>
          */
         public function get_registry(): array {
-                return [
-                        'chatkit_api_key'                => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_workflow_id'            => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_accent_color'           => [ 'type' => 'string', 'default' => '#FF4500' ],
-                        'chatkit_accent_level'           => [ 'type' => 'string', 'default' => '2' ],
-                        'chatkit_button_text'            => [ 'type' => 'string', 'default' => \__( 'Chat now', 'chatkit-wp' ) ],
-                        'chatkit_close_text'             => [ 'type' => 'string', 'default' => '✕' ],
-                        'chatkit_theme_mode'             => [ 'type' => 'string', 'default' => 'dark' ],
-                        'chatkit_enable_attachments'     => [ 'type' => 'boolean', 'default' => false ],
-                        'chatkit_persistent_sessions'    => [ 'type' => 'boolean', 'default' => true ],
-                        'chatkit_show_everywhere'        => [ 'type' => 'boolean', 'default' => false ],
-                        'chatkit_greeting_text'          => [ 'type' => 'string', 'default' => \__( 'How can I help you today?', 'chatkit-wp' ) ],
-                        'chatkit_placeholder_text'       => [ 'type' => 'string', 'default' => \__( 'Send a message...', 'chatkit-wp' ) ],
-                        'chatkit_button_size'            => [ 'type' => 'string', 'default' => 'medium' ],
-                        'chatkit_button_position'        => [ 'type' => 'string', 'default' => 'bottom-right' ],
-                        'chatkit_border_radius'          => [ 'type' => 'string', 'default' => 'round' ],
-                        'chatkit_shadow_style'           => [ 'type' => 'string', 'default' => 'normal' ],
-                        'chatkit_density'                => [ 'type' => 'string', 'default' => 'normal' ],
-                        'chatkit_locale'                 => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_default_prompt_1'       => [ 'type' => 'string', 'default' => \__( 'How can I assist you?', 'chatkit-wp' ) ],
-                        'chatkit_default_prompt_1_text'  => [ 'type' => 'string', 'default' => \__( 'Hi! How can I assist you today?', 'chatkit-wp' ) ],
-                        'chatkit_default_prompt_1_icon'  => [ 'type' => 'string', 'default' => 'circle-question' ],
-                        'chatkit_default_prompt_2'       => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_default_prompt_2_text'  => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_default_prompt_2_icon'  => [ 'type' => 'string', 'default' => 'circle-question' ],
-                        'chatkit_default_prompt_3'       => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_default_prompt_3_text'  => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_default_prompt_3_icon'  => [ 'type' => 'string', 'default' => 'circle-question' ],
-                        'chatkit_default_prompt_4'       => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_default_prompt_4_text'  => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_default_prompt_4_icon'  => [ 'type' => 'string', 'default' => 'circle-question' ],
-                        'chatkit_default_prompt_5'       => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_default_prompt_5_text'  => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_default_prompt_5_icon'  => [ 'type' => 'string', 'default' => 'circle-question' ],
-                        'chatkit_exclude_ids'            => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_exclude_home'           => [ 'type' => 'boolean', 'default' => false ],
-                        'chatkit_exclude_archive'        => [ 'type' => 'boolean', 'default' => false ],
-                        'chatkit_exclude_search'         => [ 'type' => 'boolean', 'default' => false ],
-                        'chatkit_exclude_404'            => [ 'type' => 'boolean', 'default' => false ],
-                        'chatkit_attachment_max_size'    => [ 'type' => 'string', 'default' => '20' ],
-                        'chatkit_attachment_max_count'   => [ 'type' => 'string', 'default' => '3' ],
-                        'chatkit_enable_model_picker'    => [ 'type' => 'boolean', 'default' => false ],
-                        'chatkit_enable_tools'           => [ 'type' => 'boolean', 'default' => false ],
-                        'chatkit_enable_entity_tags'     => [ 'type' => 'boolean', 'default' => false ],
-                        'chatkit_enable_custom_font'     => [ 'type' => 'boolean', 'default' => false ],
-                        'chatkit_font_family'            => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_font_size'              => [ 'type' => 'string', 'default' => '16' ],
-                        'chatkit_show_header'            => [ 'type' => 'boolean', 'default' => true ],
-                        'chatkit_show_history'           => [ 'type' => 'boolean', 'default' => true ],
-                        'chatkit_header_title_text'      => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_header_left_icon'       => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_header_left_url'        => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_header_right_icon'      => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_header_right_url'       => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_disclaimer_text'        => [ 'type' => 'string', 'default' => '' ],
-                        'chatkit_disclaimer_high_contrast' => [ 'type' => 'boolean', 'default' => false ],
-                        'chatkit_initial_thread_id'      => [ 'type' => 'string', 'default' => '' ],
-                ];
+                $registry = [];
+                $schema   = $this->get_option_schema();
+
+                foreach ( $schema as $option => $definition ) {
+                        $registry[ $option ] = [
+                                'type'    => 'array',
+                                'default' => $definition['defaults'],
+                        ];
+                }
+
+                return $registry;
         }
 
         /**
          * Provide a sanitize callback for the given option type.
          */
         public function get_sanitize_callback( string $type ): ?callable {
-                if ( 'boolean' === $type ) {
+                if ( in_array( $type, [ 'boolean', 'array' ], true ) ) {
                         return null;
                 }
 
@@ -114,7 +230,8 @@ final class Options {
          * Clear the cached options.
          */
         public function clear_cache(): void {
-                $this->cache = null;
+                $this->cache       = null;
+                $this->group_cache = [];
         }
 
         /**
@@ -124,59 +241,15 @@ final class Options {
          */
         public function get_all(): array {
                 if ( null === $this->cache ) {
-                        $this->cache = [
-                                'api_key'                 => $this->get_api_key(),
-                                'workflow_id'             => $this->get_workflow_id(),
-                                'accent_color'            => (string) \get_option( 'chatkit_accent_color', '#FF4500' ),
-                                'accent_level'            => (string) \get_option( 'chatkit_accent_level', '2' ),
-                                'button_text'             => (string) \get_option( 'chatkit_button_text', \__( 'Chat now', 'chatkit-wp' ) ),
-                                'close_text'              => (string) \get_option( 'chatkit_close_text', '✕' ),
-                                'theme_mode'              => (string) \get_option( 'chatkit_theme_mode', 'dark' ),
-                                'enable_attachments'      => (bool) \get_option( 'chatkit_enable_attachments', false ),
-                                'persistent_sessions'     => (bool) \get_option( 'chatkit_persistent_sessions', true ),
-                                'show_everywhere'         => (bool) \get_option( 'chatkit_show_everywhere', false ),
-                                'greeting_text'           => (string) \get_option( 'chatkit_greeting_text', \__( 'How can I help you today?', 'chatkit-wp' ) ),
-                                'placeholder_text'        => (string) \get_option( 'chatkit_placeholder_text', \__( 'Send a message...', 'chatkit-wp' ) ),
-                                'button_size'             => (string) \get_option( 'chatkit_button_size', 'medium' ),
-                                'button_position'         => (string) \get_option( 'chatkit_button_position', 'bottom-right' ),
-                                'border_radius'           => (string) \get_option( 'chatkit_border_radius', 'round' ),
-                                'shadow_style'            => (string) \get_option( 'chatkit_shadow_style', 'normal' ),
-                                'density'                 => (string) \get_option( 'chatkit_density', 'normal' ),
-                                'locale'                  => (string) \get_option( 'chatkit_locale', '' ),
-                                'default_prompt_1'        => (string) \get_option( 'chatkit_default_prompt_1', \__( 'How can I assist you?', 'chatkit-wp' ) ),
-                                'default_prompt_1_text'   => (string) \get_option( 'chatkit_default_prompt_1_text', \__( 'Hi! How can I assist you today?', 'chatkit-wp' ) ),
-                                'default_prompt_1_icon'   => (string) \get_option( 'chatkit_default_prompt_1_icon', 'circle-question' ),
-                                'default_prompt_2'        => (string) \get_option( 'chatkit_default_prompt_2', '' ),
-                                'default_prompt_2_text'   => (string) \get_option( 'chatkit_default_prompt_2_text', '' ),
-                                'default_prompt_2_icon'   => (string) \get_option( 'chatkit_default_prompt_2_icon', 'circle-question' ),
-                                'default_prompt_3'        => (string) \get_option( 'chatkit_default_prompt_3', '' ),
-                                'default_prompt_3_text'   => (string) \get_option( 'chatkit_default_prompt_3_text', '' ),
-                                'default_prompt_3_icon'   => (string) \get_option( 'chatkit_default_prompt_3_icon', 'circle-question' ),
-                                'default_prompt_4'        => (string) \get_option( 'chatkit_default_prompt_4', '' ),
-                                'default_prompt_4_text'   => (string) \get_option( 'chatkit_default_prompt_4_text', '' ),
-                                'default_prompt_4_icon'   => (string) \get_option( 'chatkit_default_prompt_4_icon', 'circle-question' ),
-                                'default_prompt_5'        => (string) \get_option( 'chatkit_default_prompt_5', '' ),
-                                'default_prompt_5_text'   => (string) \get_option( 'chatkit_default_prompt_5_text', '' ),
-                                'default_prompt_5_icon'   => (string) \get_option( 'chatkit_default_prompt_5_icon', 'circle-question' ),
-                                'attachment_max_size'     => (string) \get_option( 'chatkit_attachment_max_size', '20' ),
-                                'attachment_max_count'    => (string) \get_option( 'chatkit_attachment_max_count', '3' ),
-                                'enable_model_picker'     => (bool) \get_option( 'chatkit_enable_model_picker', false ),
-                                'enable_tools'            => (bool) \get_option( 'chatkit_enable_tools', false ),
-                                'enable_entity_tags'      => (bool) \get_option( 'chatkit_enable_entity_tags', false ),
-                                'enable_custom_font'      => (bool) \get_option( 'chatkit_enable_custom_font', false ),
-                                'font_family'             => (string) \get_option( 'chatkit_font_family', '' ),
-                                'font_size'               => (string) \get_option( 'chatkit_font_size', '16' ),
-                                'show_header'             => (bool) \get_option( 'chatkit_show_header', true ),
-                                'show_history'            => (bool) \get_option( 'chatkit_show_history', true ),
-                                'header_title_text'       => (string) \get_option( 'chatkit_header_title_text', '' ),
-                                'header_left_icon'        => (string) \get_option( 'chatkit_header_left_icon', '' ),
-                                'header_left_url'         => (string) \get_option( 'chatkit_header_left_url', '' ),
-                                'header_right_icon'       => (string) \get_option( 'chatkit_header_right_icon', '' ),
-                                'header_right_url'        => (string) \get_option( 'chatkit_header_right_url', '' ),
-                                'disclaimer_text'         => (string) \get_option( 'chatkit_disclaimer_text', '' ),
-                                'disclaimer_high_contrast' => (bool) \get_option( 'chatkit_disclaimer_high_contrast', false ),
-                                'initial_thread_id'       => (string) \get_option( 'chatkit_initial_thread_id', '' ),
-                        ];
+                        $basic      = $this->get_basic_settings();
+                        $appearance = $this->get_appearance_settings();
+                        $messages   = $this->get_messages_settings();
+                        $advanced   = $this->get_advanced_settings();
+
+                        $this->cache = array_merge( $basic, $appearance, $messages, $advanced );
+
+                        $this->cache['api_key']     = $this->get_api_key();
+                        $this->cache['workflow_id'] = $this->get_workflow_id();
                 }
 
                 return $this->cache;
@@ -190,7 +263,9 @@ final class Options {
                         return (string) \CHATKIT_OPENAI_API_KEY;
                 }
 
-                return (string) \get_option( 'chatkit_api_key', '' );
+                $basic = $this->get_basic_settings();
+
+                return (string) ( $basic['api_key'] ?? '' );
         }
 
         /**
@@ -201,14 +276,17 @@ final class Options {
                         return (string) \CHATKIT_WORKFLOW_ID;
                 }
 
-                return (string) \get_option( 'chatkit_workflow_id', '' );
+                $basic = $this->get_basic_settings();
+
+                return (string) ( $basic['workflow_id'] ?? '' );
         }
 
         /**
          * Create or retrieve the user identifier used for chat sessions.
          */
         public function get_or_create_user_id(): string {
-                $persistent = (bool) \get_option( 'chatkit_persistent_sessions', true );
+                $advanced   = $this->get_advanced_settings();
+                $persistent = (bool) ( $advanced['persistent_sessions'] ?? true );
 
                 if ( ! $persistent ) {
                         return 'guest_' . wp_generate_password( 12, false );
@@ -284,5 +362,124 @@ final class Options {
                 }
 
                 return $prompts;
+        }
+
+        /**
+         * Retrieve the "Basic" option group.
+         *
+         * @return array<string, mixed>
+         */
+        public function get_basic_settings(): array {
+                return $this->get_option_group( 'chatkit_basic_settings' );
+        }
+
+        /**
+         * Retrieve the "Appearance" option group.
+         *
+         * @return array<string, mixed>
+         */
+        public function get_appearance_settings(): array {
+                return $this->get_option_group( 'chatkit_appearance_settings' );
+        }
+
+        /**
+         * Retrieve the "Messages" option group.
+         *
+         * @return array<string, mixed>
+         */
+        public function get_messages_settings(): array {
+                return $this->get_option_group( 'chatkit_messages_settings' );
+        }
+
+        /**
+         * Retrieve the "Advanced" option group.
+         *
+         * @return array<string, mixed>
+         */
+        public function get_advanced_settings(): array {
+                return $this->get_option_group( 'chatkit_advanced_settings' );
+        }
+
+        /**
+         * Whether the widget is configured to appear on every page.
+         */
+        public function should_show_everywhere(): bool {
+                $basic = $this->get_basic_settings();
+
+                return ! empty( $basic['show_everywhere'] );
+        }
+
+        /**
+         * Fetch a grouped option set with defaults and legacy fallbacks.
+         *
+         * @return array<string, mixed>
+         */
+        private function get_option_group( string $option ): array {
+                if ( isset( $this->group_cache[ $option ] ) ) {
+                        return $this->group_cache[ $option ];
+                }
+
+                $schema   = $this->get_option_schema();
+                $defaults = $schema[ $option ]['defaults'] ?? [];
+                $stored   = \get_option( $option, [] );
+
+                if ( ! is_array( $stored ) ) {
+                        $stored = [];
+                }
+
+                $values = array_merge( $defaults, $stored );
+                $values = $this->merge_legacy_values( $option, $values, $defaults );
+
+                $this->group_cache[ $option ] = $values;
+
+                return $values;
+        }
+
+        /**
+         * Merge legacy single options into the grouped configuration for backwards compatibility.
+         *
+         * @param array<string, mixed> $values
+         * @param array<string, mixed> $defaults
+         *
+         * @return array<string, mixed>
+         */
+        private function merge_legacy_values( string $option, array $values, array $defaults ): array {
+                if ( ! isset( self::LEGACY_OPTION_MAP[ $option ] ) ) {
+                        return $values;
+                }
+
+                foreach ( self::LEGACY_OPTION_MAP[ $option ] as $key => $legacy_name ) {
+                        if ( ! array_key_exists( $key, $values ) ) {
+                                continue;
+                        }
+
+                        $default = $defaults[ $key ] ?? null;
+                        $current = $values[ $key ];
+
+                        if ( $current !== $default ) {
+                                continue;
+                        }
+
+                        $legacy_value = \get_option( $legacy_name, $default );
+
+                        if ( $legacy_value === $default ) {
+                                continue;
+                        }
+
+                        $values[ $key ] = $this->cast_value( $legacy_value, $default );
+                }
+
+                return $values;
+        }
+
+        /**
+         * Cast a legacy option value to match its grouped default type.
+         */
+        private function cast_value( mixed $value, mixed $default ): mixed {
+                if ( is_bool( $default ) ) {
+                        return (bool) $value;
+                }
+
+                return is_string( $default ) ? (string) $value : $value;
         }
 }

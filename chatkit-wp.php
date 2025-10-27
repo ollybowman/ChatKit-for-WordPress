@@ -87,7 +87,7 @@ final class Plugin {
                 \add_shortcode( 'openai_chatkit', [ $this->widget, 'render_shortcode' ] );
                 \add_shortcode( 'chatkit', [ $this->widget, 'render_shortcode' ] );
 
-                if ( \get_option( 'chatkit_show_everywhere', false ) ) {
+                if ( $this->options->should_show_everywhere() ) {
                         \add_action( 'wp_footer', [ $this->widget, 'add_body_attributes_script' ], 1 );
                 } else {
                         \add_action( 'wp_footer', [ $this->widget, 'conditional_body_attributes' ], 1 );

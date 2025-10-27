@@ -93,7 +93,7 @@
 
                             <p><strong><?php esc_html_e('Exclude Specific Pages/Posts (by ID):', 'chatkit-wp'); ?></strong></p>
                             <input type="text" name="chatkit_exclude_ids"
-                                   value="<?php echo esc_attr(get_option('chatkit_exclude_ids', '')); ?>"
+                                   value="<?php echo esc_attr($exclude_ids ?? ''); ?>"
                                    class="large-text" placeholder="1, 5, 12, 47">
                             <p class="description">
                                 <?php esc_html_e('Comma-separated page/post IDs to exclude. Find ID in URL when editing.', 'chatkit-wp'); ?>
@@ -102,22 +102,22 @@
                             <p><strong><?php esc_html_e('Exclude Page Types:', 'chatkit-wp'); ?></strong></p>
                             <label class="chatkit-checkbox-block">
                                 <input type="checkbox" name="chatkit_exclude_home"
-                                       <?php checked(get_option('chatkit_exclude_home', false), true); ?>>
+                                       <?php checked($exclude_home ?? false, true); ?>>
                                 <?php esc_html_e('Homepage', 'chatkit-wp'); ?>
                             </label>
                             <label class="chatkit-checkbox-block">
                                 <input type="checkbox" name="chatkit_exclude_archive"
-                                       <?php checked(get_option('chatkit_exclude_archive', false), true); ?>>
+                                       <?php checked($exclude_archive ?? false, true); ?>>
                                 <?php esc_html_e('Archives (categories, tags)', 'chatkit-wp'); ?>
                             </label>
                             <label class="chatkit-checkbox-block">
                                 <input type="checkbox" name="chatkit_exclude_search"
-                                       <?php checked(get_option('chatkit_exclude_search', false), true); ?>>
+                                       <?php checked($exclude_search ?? false, true); ?>>
                                 <?php esc_html_e('Search results page', 'chatkit-wp'); ?>
                             </label>
                             <label class="chatkit-checkbox-block">
                                 <input type="checkbox" name="chatkit_exclude_404"
-                                       <?php checked(get_option('chatkit_exclude_404', false), true); ?>>
+                                       <?php checked($exclude_404 ?? false, true); ?>>
                                 <?php esc_html_e('404 error page', 'chatkit-wp'); ?>
                             </label>
                         </div>
@@ -263,7 +263,7 @@
 
                         <label class="chatkit-checkbox-block">
                             <input type="checkbox" name="chatkit_enable_custom_font"
-                                   <?php checked(get_option('chatkit_enable_custom_font', false), true); ?>>
+                                   <?php checked($enable_custom_font ?? false, true); ?>>
                             <strong><?php esc_html_e('Enable custom font', 'chatkit-wp'); ?></strong>
                         </label>
 
