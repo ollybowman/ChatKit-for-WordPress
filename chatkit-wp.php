@@ -78,7 +78,8 @@ final class Plugin {
                 $this->api_controller = new ApiController( $this->options );
 
                 \add_action( 'init', [ $this, 'load_textdomain' ] );
-                \add_action( 'admin_menu', [ $this->settings_page, 'add_menu' ] );
+		\add_action( 'admin_menu', [ $this->settings_page, 'add_menu' ] );
+		\add_action( 'admin_enqueue_scripts', [ $this->settings_page, 'enqueue_assets' ] );
                 \add_action( 'admin_init', [ $this->settings_page, 'register_settings' ] );
                 \add_action( 'rest_api_init', [ $this->api_controller, 'register_routes' ] );
                 \add_action( 'wp_enqueue_scripts', [ $this->widget, 'enqueue_assets' ] );

@@ -624,3 +624,82 @@ body[data-chatkit-shadow="bold"] #chatToggleBtn {
 body[data-chatkit-shadow="bold"] #myChatkit {
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35);
 }
+
+/* Dark theme */
+body[data-chatkit-theme="dark"] #myChatkit {
+  background: #0b1120;
+  box-shadow: 0 18px 40px rgba(8, 47, 73, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+body[data-chatkit-theme="dark"] .chatkit-channel-picker,
+body[data-chatkit-theme="dark"] .chatkit-email-panel {
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  box-shadow: 0 24px 48px rgba(8, 47, 73, 0.55);
+}
+
+body[data-chatkit-theme="dark"] .chatkit-channel-title {
+  color: #f8fafc;
+}
+
+body[data-chatkit-theme="dark"] .chatkit-channel-subtitle {
+  color: #94a3b8;
+}
+
+body[data-chatkit-theme="dark"] .chatkit-channel-card {
+  background: #111c2f;
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 16px 34px rgba(7, 89, 133, 0.28);
+}
+
+body[data-chatkit-theme="dark"] .chatkit-channel-card:hover {
+  box-shadow: 0 22px 48px rgba(7, 89, 133, 0.36);
+}
+
+body[data-chatkit-theme="dark"] .chatkit-card-content small {
+  color: #cbd5f5;
+}
+
+body[data-chatkit-theme="dark"] .chatkit-card-icon--email {
+  background: rgba(248, 113, 113, 0.18);
+  color: #fca5a5;
+}
+
+body[data-chatkit-theme="dark"] .chatkit-card-icon--chat {
+  background: rgba(129, 140, 248, 0.2);
+  color: #a5b4fc;
+}
+
+body[data-chatkit-theme="dark"] .chatkit-email-panel h3,
+body[data-chatkit-theme="dark"] .chatkit-email-panel p {
+  color: inherit;
+}
+
+body[data-chatkit-theme="dark"] .chatkit-email-form input,
+body[data-chatkit-theme="dark"] .chatkit-email-form textarea {
+  background: #0b1526;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: #e2e8f0;
+}
+
+body[data-chatkit-theme="dark"] .chatkit-email-form input:focus,
+body[data-chatkit-theme="dark"] .chatkit-email-form textarea:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.35);
+}
+
+body[data-chatkit-theme="dark"] .chatkit-email-submit {
+  background: linear-gradient(135deg, #7c3aed, #4c1d95);
+  box-shadow: 0 12px 28px rgba(76, 29, 149, 0.4);
+}
+
+body[data-chatkit-theme="dark"] .chatkit-email-alt {
+  color: #cbd5f5;
+}
+
+body[data-chatkit-theme="dark"] .chatkit-email-alt a {
+  color: #818cf8;
+}

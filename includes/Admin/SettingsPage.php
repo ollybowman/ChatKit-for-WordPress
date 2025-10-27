@@ -12,18 +12,22 @@ use ChatkitWp\Settings\Options;
  * Handles registration and rendering of the plugin settings page.
  */
 final class SettingsPage {
+        private ?string $page_hook = null;
+
         public function __construct( private Options $options ) {}
 
         /**
          * Register the settings page in the WordPress admin.
          */
         public function add_menu(): void {
-                \add_options_page(
-                        \__( 'ChatKit Settings', 'chatkit-wp' ),
+                $this->page_hook = \add_menu_page(
+                        \__( 'ChatKit Studio', 'chatkit-wp' ),
                         \__( 'ChatKit', 'chatkit-wp' ),
                         'manage_options',
-                        'chatkit-settings',
-                        [ $this, 'render' ]
+                        'chatkit-console',
+                        [ $this, 'render' ],
+                        'dashicons-format-chat',
+                        56
                 );
         }
 
@@ -42,6 +46,44 @@ final class SettingsPage {
                                 ]
                         );
                 }
+        }
+
+        /**
+         * Enqueue admin assets when viewing the ChatKit console.
+         */
+        public function enqueue_assets( string $hook ): void {
+                if ( empty( $this->page_hook ) || $hook !== $this->page_hook ) {
+                        return;
+                }
+
+                \wp_enqueue_style(
+                        'chatkit-admin',
+                        CHATKIT_WP_PLUGIN_URL . 'assets/chatkit-admin.css',
+                        [],
+                        CHATKIT_WP_VERSION
+                );
+
+                \wp_enqueue_script(
+                        'chatkit-admin',
+                        CHATKIT_WP_PLUGIN_URL . 'assets/chatkit-admin.js',
+                        [],
+                        CHATKIT_WP_VERSION,
+                        true
+                );
+
+                \wp_localize_script(
+                        'chatkit-admin',
+                        'chatkitAdminConfig',
+                        [
+                                'testEndpoint' => \rest_url( 'chatkit/v1/test' ),
+                                'restNonce'    => \wp_create_nonce( 'wp_rest' ),
+                                'strings'      => [
+                                        'testing' => \__( 'Testing…', 'chatkit-wp' ),
+                                        'success' => \__( 'Connection successful! Plugin is correctly configured.', 'chatkit-wp' ),
+                                        'error'   => \__( 'Something went wrong. Please review your credentials.', 'chatkit-wp' ),
+                                ],
+                        ]
+                );
         }
 
         /**

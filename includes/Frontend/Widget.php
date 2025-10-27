@@ -90,6 +90,7 @@ final class Widget {
 						'disclaimerHighContrast' => (bool) $options['disclaimer_high_contrast'],
 						'initialThreadId'        => $options['initial_thread_id'],
 						'bodyAttributes'         => [
+							'themeMode'     => $options['theme_mode'],
 							'buttonSize'     => $options['button_size'],
 							'buttonPosition' => $options['button_position'],
 							'borderRadius'   => $options['border_radius'],

@@ -25,6 +25,7 @@
     }
 
     const mapping = {
+      themeMode: 'theme',
       buttonSize: 'button-size',
       buttonPosition: 'position',
       borderRadius: 'border-radius',
