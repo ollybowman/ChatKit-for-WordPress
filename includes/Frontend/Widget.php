@@ -54,11 +54,11 @@ final class Widget {
                 $options        = $this->options->get_all();
                 $prompts_config = $this->options->build_default_prompts( $options );
 
-                \wp_localize_script(
-                        'chatkit-embed',
-                        'chatkitConfig',
-                        [
-                                'restUrl'                => \rest_url( 'chatkit/v1/session' ),
+				\wp_localize_script(
+					'chatkit-embed',
+					'chatkitConfig',
+					[
+						'restUrl'                => \rest_url( 'chatkit/v1/session' ),
                                 'accentColor'            => $options['accent_color'],
                                 'accentLevel'            => (int) $options['accent_level'],
                                 'themeMode'              => $options['theme_mode'],
@@ -84,16 +84,22 @@ final class Widget {
                                 'headerLeftIcon'         => $options['header_left_icon'],
                                 'headerLeftUrl'          => $options['header_left_url'],
                                 'headerRightIcon'        => $options['header_right_icon'],
-                                'headerRightUrl'         => $options['header_right_url'],
-                                'historyEnabled'         => (bool) $options['show_history'],
-                                'disclaimerText'         => $options['disclaimer_text'],
-                                'disclaimerHighContrast' => (bool) $options['disclaimer_high_contrast'],
-                                'initialThreadId'        => $options['initial_thread_id'],
-                                'i18n'                   => [
-                                        'unableToStart' => \__( 'Unable to start chat. Please try again later.', 'chatkit-wp' ),
-                                        'configError'   => \__( 'Chat configuration error. Please contact support.', 'chatkit-wp' ),
-                                        'loadFailed'    => \__( 'Chat widget failed to load. Please refresh the page.', 'chatkit-wp' ),
-                                ],
+						'headerRightUrl'         => $options['header_right_url'],
+						'historyEnabled'         => (bool) $options['show_history'],
+						'disclaimerText'         => $options['disclaimer_text'],
+						'disclaimerHighContrast' => (bool) $options['disclaimer_high_contrast'],
+						'initialThreadId'        => $options['initial_thread_id'],
+						'bodyAttributes'         => [
+							'buttonSize'     => $options['button_size'],
+							'buttonPosition' => $options['button_position'],
+							'borderRadius'   => $options['border_radius'],
+							'shadowStyle'    => $options['shadow_style'],
+						],
+						'i18n'                   => [
+							'unableToStart' => \__( 'Unable to start chat. Please try again later.', 'chatkit-wp' ),
+							'configError'   => \__( 'Chat configuration error. Please contact support.', 'chatkit-wp' ),
+							'loadFailed'    => \__( 'Chat widget failed to load. Please refresh the page.', 'chatkit-wp' ),
+						],
                         ]
                 );
         }
@@ -118,22 +124,88 @@ final class Widget {
                 );
 
                 $atts['button_text']  = \sanitize_text_field( $atts['button_text'] );
-                $atts['accent_color'] = \sanitize_hex_color( $atts['accent_color'] ) ?: '#FF4500';
+		$atts['accent_color'] = \sanitize_hex_color( $atts['accent_color'] ) ?: '#FF4500';
 
-                \ob_start();
-                ?>
-                <button id="chatToggleBtn"
-                        type="button"
-                        aria-label="<?php echo \esc_attr__( 'Toggle chat window', 'chatkit-wp' ); ?>"
-                        aria-expanded="false"
-                        style="background-color: <?php echo \esc_attr( $atts['accent_color'] ); ?>;">
-                        <?php echo \esc_html( $atts['button_text'] ); ?>
-                </button>
-                <openai-chatkit id="myChatkit"
-                        role="dialog"
-                        aria-modal="false"
-                        aria-label="<?php echo \esc_attr__( 'Chat assistant', 'chatkit-wp' ); ?>"></openai-chatkit>
-                <?php
+		$email_address = \sanitize_email( \get_option( 'admin_email', '' ) );
+
+		\ob_start();
+		?>
+		<button id="chatToggleBtn"
+			type="button"
+			aria-label="<?php echo \esc_attr__( 'Toggle chat window', 'chatkit-wp' ); ?>"
+			aria-expanded="false"
+			style="background-color: <?php echo \esc_attr( $atts['accent_color'] ); ?>;">
+			<?php echo \esc_html( $atts['button_text'] ); ?>
+		</button>
+		<div id="chatkitChannelPicker" class="chatkit-channel-picker" hidden>
+			<div class="chatkit-channel-header">
+				<span class="chatkit-channel-title"><?php echo \esc_html__( 'Start a conversation', 'chatkit-wp' ); ?></span>
+				<p class="chatkit-channel-subtitle"><?php echo \esc_html__( 'What channel do you prefer?', 'chatkit-wp' ); ?></p>
+			</div>
+			<div class="chatkit-channel-options">
+				<button class="chatkit-channel-card" type="button" data-channel="email">
+					<span class="chatkit-card-icon chatkit-card-icon--email" aria-hidden="true">✉️</span>
+					<span class="chatkit-card-content">
+						<strong><?php echo \esc_html__( 'Email', 'chatkit-wp' ); ?></strong>
+						<small><?php echo \esc_html__( 'No time to wait around? We usually respond within a few hours.', 'chatkit-wp' ); ?></small>
+					</span>
+				</button>
+
+				<button class="chatkit-channel-card" type="button" data-channel="chat">
+					<span class="chatkit-card-icon chatkit-card-icon--chat" aria-hidden="true">💬</span>
+					<span class="chatkit-card-content">
+						<strong><?php echo \esc_html__( 'Chat', 'chatkit-wp' ); ?></strong>
+						<small><?php echo \esc_html__( 'We\'re online right now—talk with our team in real-time.', 'chatkit-wp' ); ?></small>
+					</span>
+				</button>
+			</div>
+		</div>
+
+		<div id="chatkitEmailPanel" class="chatkit-email-panel" data-contact-email="<?php echo \esc_attr( $email_address ); ?>" hidden>
+			<button type="button" class="chatkit-back-button" data-target="picker">
+				<span aria-hidden="true">←</span>
+				<?php echo \esc_html__( 'Back', 'chatkit-wp' ); ?>
+			</button>
+			<h3 class="chatkit-email-title"><?php echo \esc_html__( 'Send us an email', 'chatkit-wp' ); ?></h3>
+			<p class="chatkit-email-subtitle">
+				<?php echo \esc_html__( 'Share a few details and we\'ll get back to you shortly.', 'chatkit-wp' ); ?>
+			</p>
+			<form id="chatkitEmailForm" class="chatkit-email-form">
+				<label>
+					<?php echo \esc_html__( 'Your email address', 'chatkit-wp' ); ?>
+					<input type="email" name="email" required placeholder="<?php echo \esc_attr__( 'you@example.com', 'chatkit-wp' ); ?>">
+				</label>
+				<label>
+					<?php echo \esc_html__( 'How can we help?', 'chatkit-wp' ); ?>
+					<textarea name="message" rows="4" required placeholder="<?php echo \esc_attr__( 'Tell us a bit about what you need…', 'chatkit-wp' ); ?>"></textarea>
+				</label>
+				<button type="submit" class="chatkit-email-submit">
+					<?php echo \esc_html__( 'Send email', 'chatkit-wp' ); ?>
+				</button>
+			</form>
+			<?php if ( ! empty( $email_address ) ) : ?>
+				<p class="chatkit-email-alt">
+					<?php
+					printf(
+						/* translators: %s: email address */
+						\esc_html__( 'Prefer your own email client? Write to %s.', 'chatkit-wp' ),
+						sprintf(
+							'<a href="%1$s">%2$s</a>',
+							\esc_url( 'mailto:' . rawurlencode( $email_address ) ),
+							\esc_html( $email_address )
+						)
+					);
+					?>
+				</p>
+			<?php endif; ?>
+		</div>
+
+		<openai-chatkit id="myChatkit"
+			role="dialog"
+			aria-modal="false"
+			hidden
+			aria-label="<?php echo \esc_attr__( 'Chat assistant', 'chatkit-wp' ); ?>"></openai-chatkit>
+		<?php
 
                 return (string) \ob_get_clean();
         }
@@ -151,63 +223,19 @@ final class Widget {
                 }
         }
 
-        /**
-         * Add the body attributes when a ChatKit shortcode is present.
-         */
-        public function conditional_body_attributes(): void {
-                global $post;
+		/**
+		 * Legacy hook preserved for backwards compatibility. The front-end script now applies body attributes.
+		 */
+		public function conditional_body_attributes(): void {
+			// Intentionally left blank.
+		}
 
-                if ( ! $post ) {
-                        return;
-                }
-
-                $content = (string) $post->post_content;
-
-                if ( \has_shortcode( $content, 'openai_chatkit' ) || \has_shortcode( $content, 'chatkit' ) ) {
-                        $this->add_body_attributes_script();
-                }
-        }
-
-        /**
-         * Print the inline script responsible for setting body data attributes.
-         */
-        public function add_body_attributes_script(): void {
-                $options = $this->options->get_all();
-
-                $attributes = [
-                        'button_size'     => $options['button_size'],
-                        'button_position' => $options['button_position'],
-                        'border_radius'   => $options['border_radius'],
-                        'shadow_style'    => $options['shadow_style'],
-                ];
-
-                $script_lines = [
-                        '( function() {',
-                        '\tvar applyAttributes = function() {',
-                        '\t\tvar body = document.body;',
-                        '\t\tif ( ! body ) {',
-                        "\t\t\treturn;",
-                        '\t\t}',
-                ];
-
-                foreach ( $attributes as $data_key => $value ) {
-                        $script_lines[] = sprintf(
-                                "\t\tbody.setAttribute( 'data-chatkit-%s', %s );",
-                                str_replace( '_', '-', $data_key ),
-                                \wp_json_encode( (string) $value )
-                        );
-                }
-
-                $script_lines[] = '\t};';
-                $script_lines[] = "\tif ( document.readyState === 'loading' ) {";
-                $script_lines[] = "\t\tdocument.addEventListener( 'DOMContentLoaded', applyAttributes );";
-                $script_lines[] = '\t} else {';
-                $script_lines[] = '\t\tapplyAttributes();';
-                $script_lines[] = '\t}';
-                $script_lines[] = '} )();';
-
-                \wp_print_inline_script_tag( implode( "\n", $script_lines ) );
-        }
+		/**
+		 * Legacy hook preserved for backwards compatibility. Body attributes are applied via assets/chatkit-embed.js.
+		 */
+		public function add_body_attributes_script(): void {
+			// Intentionally left blank.
+		}
 
         /**
          * Determine whether the widget should render automatically on the current page.

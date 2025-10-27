@@ -14,6 +14,35 @@
     return !!value;
   }
 
+  function applyBodyAttributes() {
+    if (!config.bodyAttributes) {
+      return;
+    }
+
+    const body = document.body;
+    if (!body) {
+      return;
+    }
+
+    const mapping = {
+      buttonSize: 'button-size',
+      buttonPosition: 'position',
+      borderRadius: 'border-radius',
+      shadowStyle: 'shadow'
+    };
+
+    Object.keys(mapping).forEach(key => {
+      const value = config.bodyAttributes[key];
+      const attributeName = `data-chatkit-${mapping[key]}`;
+
+      if (typeof value === 'undefined' || value === null || value === '') {
+        body.removeAttribute(attributeName);
+      } else {
+        body.setAttribute(attributeName, String(value));
+      }
+    });
+  }
+
   function loadChatkitScript() {
     return new Promise((resolve, reject) => {
       if (customElements.get('openai-chatkit')) {
@@ -100,53 +129,167 @@
   function setupToggle() {
     const button = document.getElementById('chatToggleBtn');
     const chatkit = document.getElementById('myChatkit');
+    const picker = document.getElementById('chatkitChannelPicker');
+    const emailPanel = document.getElementById('chatkitEmailPanel');
+    const emailForm = document.getElementById('chatkitEmailForm');
 
-    if (!button || !chatkit) {
+    if (!button || !chatkit || !picker || !emailPanel) {
       console.warn('ChatKit toggle elements not found');
       return;
     }
 
+    applyBodyAttributes();
+
     const originalText = button.textContent || config.buttonText || 'Chat now';
     const closeText = config.closeText || '✕';
     const accentColor = config.accentColor || '#FF4500';
+    const containers = [chatkit, picker, emailPanel];
+
+    function toggleBodyScroll(lock) {
+      if (lock) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    }
+
+    function showView(view) {
+      if (picker) {
+        const showPicker = view === 'picker';
+        picker.hidden = !showPicker;
+        picker.style.display = showPicker ? 'flex' : 'none';
+        if (view === 'picker') {
+          setTimeout(() => {
+            const firstCard = picker.querySelector('.chatkit-channel-card');
+            if (firstCard) {
+              firstCard.focus();
+            }
+          }, 80);
+        }
+      }
+
+      if (emailPanel) {
+        const showEmail = view === 'email';
+        emailPanel.hidden = !showEmail;
+        emailPanel.style.display = showEmail ? 'block' : 'none';
+        if (view === 'email') {
+          setTimeout(() => {
+            const emailInput = emailPanel.querySelector('input[name="email"]');
+            if (emailInput) {
+              emailInput.focus();
+            }
+          }, 120);
+        }
+      }
+
+      if (chatkit) {
+        const showChat = view === 'chat';
+        chatkit.hidden = !showChat;
+        chatkit.style.display = showChat ? 'block' : 'none';
+        chatkit.setAttribute('aria-modal', showChat ? 'true' : 'false');
+
+        if (showChat) {
+          setTimeout(() => chatkit.focus(), 140);
+        }
+      }
+    }
+
+    function openPopup(initialView = 'picker') {
+      isOpen = true;
+      button.classList.add('chatkit-open');
+      button.textContent = closeText;
+      button.style.backgroundColor = accentColor;
+      button.setAttribute('aria-expanded', 'true');
+      showView(initialView);
+
+      if (window.innerWidth <= 768) {
+        toggleBodyScroll(true);
+      }
+    }
+
+    function closePopup() {
+      isOpen = false;
+      button.classList.remove('chatkit-open');
+      button.textContent = originalText;
+      button.style.backgroundColor = accentColor;
+      button.setAttribute('aria-expanded', 'false');
+      showView(null);
+      button.focus();
+      toggleBodyScroll(false);
+    }
 
     button.addEventListener('click', () => {
-      isOpen = !isOpen;
-      chatkit.style.display = isOpen ? 'block' : 'none';
-      button.setAttribute('aria-expanded', isOpen);
-      chatkit.setAttribute('aria-modal', isOpen);
-      
       if (isOpen) {
-        button.classList.add('chatkit-open');
-        button.textContent = closeText;
-        button.style.backgroundColor = accentColor;
-        chatkit.style.animation = 'chatkit-slide-up 0.3s ease-out';
-        
-        setTimeout(() => chatkit.focus(), 100);
-        
-        if (window.innerWidth <= 768) {
-          document.body.style.overflow = 'hidden';
-        }
+        closePopup();
       } else {
-        button.classList.remove('chatkit-open');
-        button.textContent = originalText;
-        button.style.backgroundColor = accentColor;
-        button.focus();
-        document.body.style.overflow = '';
+        openPopup('picker');
       }
     });
 
+    picker.querySelectorAll('[data-channel]').forEach(card => {
+      card.addEventListener('click', () => {
+        const channel = card.getAttribute('data-channel');
+        if (channel === 'email') {
+          showView('email');
+        } else if (channel === 'chat') {
+          showView('chat');
+        }
+      });
+    });
+
+    document.querySelectorAll('.chatkit-back-button').forEach(backBtn => {
+      backBtn.addEventListener('click', () => {
+        showView('picker');
+      });
+    });
+
+    if (emailForm) {
+      emailForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const emailInput = emailForm.querySelector('input[name="email"]');
+        const messageInput = emailForm.querySelector('textarea[name="message"]');
+        const destination = (emailPanel.dataset.contactEmail || '').trim();
+
+        if (!destination) {
+          showUserError('Email destination not configured. Please contact the site administrator.');
+          return;
+        }
+
+        const fromEmail = emailInput ? emailInput.value.trim() : '';
+        const message = messageInput ? messageInput.value.trim() : '';
+
+        const subject = encodeURIComponent(`Website enquiry from ${fromEmail || 'visitor'}`);
+        const bodyLines = [];
+        if (fromEmail) {
+          bodyLines.push(`From: ${fromEmail}`);
+          bodyLines.push('');
+        }
+        if (message) {
+          bodyLines.push(message);
+        }
+        const body = encodeURIComponent(bodyLines.join('\n'));
+
+        window.location.href = `mailto:${destination}?subject=${subject}&body=${body}`;
+        closePopup();
+      });
+    }
+
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && isOpen) {
-        button.click();
+        closePopup();
       }
     });
 
     document.addEventListener('click', (e) => {
-      if (isOpen && 
-          !chatkit.contains(e.target) && 
-          !button.contains(e.target)) {
-        button.click();
+      if (!isOpen) {
+        return;
+      }
+
+      const isInsideContainer = containers.some(container => container && container.contains(e.target));
+      const isButton = button.contains(e.target);
+
+      if (!isInsideContainer && !isButton) {
+        closePopup();
       }
     });
   }
