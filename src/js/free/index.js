@@ -3,20 +3,9 @@ import {
 	loadChatkitScript,
 	createClientSecretFetcher,
 	showUserError,
-} from './utils';
-import { initNudge } from './nudge';
-import { PromptManager } from './prompts';
-import { AdvancedOptionsConfigurator } from './advanced-options';
-import { ChannelPicker } from './channel-picker';
-import { ChatToggleController } from './chat-toggle-controller';
-import { FeatureFlags, isProEnabled } from './pro-module';
+} from '../frontend/utils';
 
 const config = window.chatkitConfig || {};
-config.isPro = isProEnabled(config);
-
-const featureFlags = new FeatureFlags(config);
-const promptManager = new PromptManager(config, featureFlags);
-const advancedConfigurator = new AdvancedOptionsConfigurator(config, featureFlags);
 const getClientSecret = createClientSecretFetcher(config);
 
 const initialiseChatKitElement = async (chatkitElement) => {
@@ -40,36 +29,24 @@ const initialiseChatKitElement = async (chatkitElement) => {
 			},
 		},
 		composer: {
-			attachments: {},
+			attachments: {
+				enabled: false,
+			},
 			placeholder: config.placeholderText || 'Send a message...',
 		},
 		startScreen: {
 			greeting: config.greetingText || 'How can I help you today?',
-			prompts: promptManager.getPrompts(),
+			prompts: [],
+		},
+		history: {
+			enabled: true,
 		},
 	};
 
-	advancedConfigurator.apply(options);
-
-	if (!options.history) {
-		options.history = { enabled: true };
-	}
-
-	if (config.locale && config.locale.trim() !== '' && !options.locale) {
-		options.locale = config.locale;
-	}
-
-	console.log('🚀 Initializing ChatKit with final config:', options);
+	console.log('🚀 Initializing ChatKit (free) with config:', options);
 
 	chatkitElement.style.display = 'block';
 	chatkitElement.setOptions(options);
-
-	if (typeof gtag !== 'undefined') {
-		gtag('event', 'chatkit_initialized', {
-			event_category: 'engagement',
-			event_label: 'ChatKit Ready',
-		});
-	}
 };
 
 const setupToggle = () => {
@@ -78,32 +55,48 @@ const setupToggle = () => {
 
 	if (!button || !chatkit) {
 		console.warn('ChatKit toggle elements not found');
-		return null;
+		return;
 	}
 
-	const channelPicker = new ChannelPicker(config, { showError: showUserError, flags: featureFlags });
-	const controller = new ChatToggleController({
-		button,
-		chatkitElement: chatkit,
-		channelPicker,
-		accentColor: config.accentColor || '#FF4500',
-		originalLabel: button.getAttribute('aria-label'),
-		closeLabel: config.closeText || button.getAttribute('aria-label'),
-		flags: featureFlags,
+	let isOpen = false;
+
+	const open = () => {
+		isOpen = true;
+		button.classList.add('chatkit-open');
+		button.setAttribute('aria-expanded', 'true');
+		chatkit.hidden = false;
+		chatkit.style.display = 'block';
+
+		if (window.innerWidth <= 768) {
+			document.body.style.overflow = 'hidden';
+		}
+
+		setTimeout(() => chatkit.focus(), 140);
+	};
+
+	const close = () => {
+		isOpen = false;
+		button.classList.remove('chatkit-open');
+		button.setAttribute('aria-expanded', 'false');
+		chatkit.hidden = true;
+		chatkit.style.display = 'none';
+		document.body.style.overflow = '';
+	};
+
+	button.addEventListener('click', () => {
+		if (isOpen) {
+			close();
+		} else {
+			open();
+		}
 	});
 
-	const initialised = controller.init();
-
-	if (!initialised) {
-		return null;
-	}
-
-	const nudgeManager = initNudge(config.nudge, button, () => controller.open());
-	controller.setNudgeManager(nudgeManager);
-	controller.scheduleInitialNudge();
-
-	return controller;
-};
+	document.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape' && isOpen) {
+			close();
+		}
+	});
+}
 
 const initChatKit = async () => {
 	if (!config.restUrl) {

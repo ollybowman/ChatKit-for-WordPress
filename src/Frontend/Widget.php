@@ -36,10 +36,11 @@ final class Widget {
                         return;
                 }
 
-$frontend_asset_path = CHATKIT_WP_PLUGIN_DIR . 'build/frontend.asset.php';
+		$frontend_asset_path = CHATKIT_WP_PLUGIN_DIR . 'build/frontend.asset.php';
 
-if ( file_exists( $frontend_asset_path ) ) {
-		$asset      = include $frontend_asset_path;
+		if ( file_exists( $frontend_asset_path ) ) {
+
+		$asset   = include $frontend_asset_path;
 		$deps       = isset( $asset['dependencies'] ) ? $asset['dependencies'] : [];
 		$version    = isset( $asset['version'] ) ? $asset['version'] : CHATKIT_WP_VERSION;
 

@@ -15,8 +15,8 @@
     "webpack-cli": "^5.1.4"
   },
   "scripts": {
-    "start": "wp-scripts start admin=src/js/admin/index.js frontend=src/js/frontend/index.js",
-    "build": "wp-scripts build admin=src/js/admin/index.js frontend=src/js/frontend/index.js"
+    "start": "wp-scripts start admin=src/js/admin/index.js pro=src/js/frontend/index.js free=src/js/free/index.js",
+    "build": "wp-scripts build admin=src/js/admin/index.js pro=src/js/frontend/index.js free=src/js/free/index.js"
   },
   "keywords": [],
   "author": "",
