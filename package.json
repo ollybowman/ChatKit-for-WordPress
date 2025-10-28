@@ -1,5 +1,8 @@
 {
-  "dependencies": {},
+  "dependencies": {
+    "@openai/chatkit": "^1.0.0",
+    "@openai/chatkit-react": "^1.1.1"
+  },
   "name": "openai-chatkit-for-wordpress",
   "version": "1.0.0",
   "description": "**Contributors:** francescogruner   **Tags:** openai, chatkit, chatbot, ai, assistant, widget, chat, conversational-ai   **Requires at least:** 5.8   **Tested up to:** 6.5   **Requires PHP:** 7.4   **Stable tag:** 1.0.3   **License:** GPL-2.0-or-later   **License URI:** https://www.gnu.org/licenses/gpl-2.0.html",
@@ -12,8 +15,8 @@
     "webpack-cli": "^5.1.4"
   },
   "scripts": {
-    "start": "wp-scripts start",
-    "build": "wp-scripts build"
+    "start": "wp-scripts start admin=src/js/admin/index.js frontend=src/js/frontend/index.js",
+    "build": "wp-scripts build admin=src/js/admin/index.js frontend=src/js/frontend/index.js"
   },
   "keywords": [],
   "author": "",

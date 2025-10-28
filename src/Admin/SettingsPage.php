@@ -63,13 +63,29 @@ final class SettingsPage {
 			CHATKIT_WP_VERSION
 		);
 
+	$admin_asset_path = CHATKIT_WP_PLUGIN_DIR . 'build/admin.asset.php';
+
+	if ( file_exists( $admin_asset_path ) ) {
+		$asset   = include $admin_asset_path;
+		$deps    = isset( $asset['dependencies'] ) ? $asset['dependencies'] : [];
+		$version = isset( $asset['version'] ) ? $asset['version'] : CHATKIT_WP_VERSION;
+
 		\wp_enqueue_script(
 			'chatkit-admin',
-			CHATKIT_WP_PLUGIN_URL . 'src/js/chatkit-admin.js',
+			CHATKIT_WP_PLUGIN_URL . 'build/admin.js',
+			$deps,
+			$version,
+			true
+		);
+	} else {
+		\wp_enqueue_script(
+			'chatkit-admin',
+			CHATKIT_WP_PLUGIN_URL . 'src/js/legacy/chatkit-admin-legacy.js',
 			[],
 			CHATKIT_WP_VERSION,
 			true
 		);
+	}
 
                 \wp_localize_script(
                         'chatkit-admin',

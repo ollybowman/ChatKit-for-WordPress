@@ -52,10 +52,10 @@
       }
 
       const script = document.createElement('script');
-      script.src = 'https://cdn.platform.openai.com/deployments/chatkit/chatkit.js';
+      script.src = (window.chatkitConfig && window.chatkitConfig.loaderUrl) || 'https://cdn.platform.openai.com/deployments/chatkit/chatkit.js';
       script.defer = true;
       script.onload = resolve;
-      script.onerror = () => reject(new Error('Failed to load ChatKit CDN'));
+      script.onerror = () => reject(new Error('Failed to load ChatKit loader'));
       document.head.appendChild(script);
     });
   }

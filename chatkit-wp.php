@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: OpenAI ChatKit for WordPress
+ * Plugin Name:ChatKit for WordPress
  * Plugin URI: https://github.com/francescogruner/openai-chatkit-wordpress
  * Description: Integrate OpenAI's ChatKit into your WordPress site with guided setup. Supports customizable text in any language.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: Francesco Grüner
  * Author URI: https://francescogruner.it
  * License: GPL v2 or later

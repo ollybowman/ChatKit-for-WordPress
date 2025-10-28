@@ -36,13 +36,29 @@ final class Widget {
                         return;
                 }
 
-	\wp_enqueue_script(
-		'chatkit-embed',
-		CHATKIT_WP_PLUGIN_URL . 'src/js/chatkit-embed.js',
-		[],
-		CHATKIT_WP_VERSION,
-		true
-	);
+$frontend_asset_path = CHATKIT_WP_PLUGIN_DIR . 'build/frontend.asset.php';
+
+if ( file_exists( $frontend_asset_path ) ) {
+		$asset      = include $frontend_asset_path;
+		$deps       = isset( $asset['dependencies'] ) ? $asset['dependencies'] : [];
+		$version    = isset( $asset['version'] ) ? $asset['version'] : CHATKIT_WP_VERSION;
+
+		\wp_enqueue_script(
+			'chatkit-embed',
+			CHATKIT_WP_PLUGIN_URL . 'build/frontend.js',
+			$deps,
+			$version,
+			true
+		);
+	} else {
+		\wp_enqueue_script(
+			'chatkit-embed',
+			CHATKIT_WP_PLUGIN_URL . 'src/js/legacy/chatkit-embed-legacy.js',
+			[],
+			CHATKIT_WP_VERSION,
+			true
+		);
+	}
 
 	\wp_enqueue_style(
 		'chatkit-embed',
@@ -50,6 +66,10 @@ final class Widget {
 		[],
 		CHATKIT_WP_VERSION
 	);
+
+	$loader_url = file_exists( CHATKIT_WP_PLUGIN_DIR . 'build/chatkit-loader.js' )
+		? CHATKIT_WP_PLUGIN_URL . 'build/chatkit-loader.js'
+		: CHATKIT_WP_PLUGIN_URL . 'src/js/frontend/chatkit.js';
 
                 $options        = $this->options->get_all();
                 $prompts_config = $this->options->build_default_prompts( $options );
@@ -59,31 +79,31 @@ final class Widget {
 					'chatkitConfig',
 					[
 						'restUrl'                => \rest_url( 'chatkit/v1/session' ),
-                                'accentColor'            => $options['accent_color'],
-                                'accentLevel'            => (int) $options['accent_level'],
-                                'themeMode'              => $options['theme_mode'],
-                                'enableAttachments'      => (bool) $options['enable_attachments'],
-                                'attachmentMaxSize'      => (int) $options['attachment_max_size'],
-                                'attachmentMaxCount'     => (int) $options['attachment_max_count'],
-                                'buttonText'             => $options['button_text'],
-                                'closeText'              => $options['close_text'],
-                                'greetingText'           => $options['greeting_text'],
-                                'placeholderText'        => $options['placeholder_text'],
-                                'density'                => $options['density'],
-                                'borderRadius'           => $options['border_radius'],
-                                'locale'                 => $options['locale'],
-                                'prompts'                => $prompts_config,
-                                'customFont'             => $options['enable_custom_font'] && ! empty( $options['font_family'] )
-                                        ? [
-                                                'fontFamily' => $options['font_family'],
-                                                'baseSize'   => (int) $options['font_size'],
-                                        ]
-                                        : null,
-                                'showHeader'             => (bool) $options['show_header'],
-                                'headerTitleText'        => $options['header_title_text'],
-                                'headerLeftIcon'         => $options['header_left_icon'],
-                                'headerLeftUrl'          => $options['header_left_url'],
-                                'headerRightIcon'        => $options['header_right_icon'],
+						'accentColor'            => $options['accent_color'],
+						'accentLevel'            => (int) $options['accent_level'],
+						'themeMode'              => $options['theme_mode'],
+						'enableAttachments'      => (bool) $options['enable_attachments'],
+						'attachmentMaxSize'      => (int) $options['attachment_max_size'],
+						'attachmentMaxCount'     => (int) $options['attachment_max_count'],
+						'buttonText'             => $options['button_text'],
+						'closeText'              => $options['close_text'],
+						'greetingText'           => $options['greeting_text'],
+						'placeholderText'        => $options['placeholder_text'],
+						'density'                => $options['density'],
+						'borderRadius'           => $options['border_radius'],
+						'locale'                 => $options['locale'],
+						'prompts'                => $prompts_config,
+						'customFont'             => $options['enable_custom_font'] && ! empty( $options['font_family'] )
+								? [
+										'fontFamily' => $options['font_family'],
+										'baseSize'   => (int) $options['font_size'],
+								]
+								: null,
+						'showHeader'             => (bool) $options['show_header'],
+						'headerTitleText'        => $options['header_title_text'],
+						'headerLeftIcon'         => $options['header_left_icon'],
+						'headerLeftUrl'          => $options['header_left_url'],
+						'headerRightIcon'        => $options['header_right_icon'],
 						'headerRightUrl'         => $options['header_right_url'],
 						'historyEnabled'         => (bool) $options['show_history'],
 						'disclaimerText'         => $options['disclaimer_text'],
@@ -96,13 +116,14 @@ final class Widget {
 							'borderRadius'   => $options['border_radius'],
 							'shadowStyle'    => $options['shadow_style'],
 						],
-						'nudge'                  => [
-							'enabled'       => (bool) ( $options['nudge_enabled'] ?? true ),
-							'initialDelay'  => (int) ( $options['nudge_initial_delay'] ?? 12 ),
-							'repeatDelay'   => (int) ( $options['nudge_repeat_delay'] ?? 36 ),
-							'message'       => $options['nudge_message'] ?? '',
-						],
-						'i18n'                   => [
+			'nudge'                  => [
+				'enabled'       => (bool) ( $options['nudge_enabled'] ?? true ),
+				'initialDelay'  => (int) ( $options['nudge_initial_delay'] ?? 12 ),
+				'repeatDelay'   => (int) ( $options['nudge_repeat_delay'] ?? 36 ),
+				'message'       => $options['nudge_message'] ?? '',
+			],
+			'loaderUrl'             => $loader_url,
+			'i18n'                   => [
 							'unableToStart' => \__( 'Unable to start chat. Please try again later.', 'chatkit-wp' ),
 							'configError'   => \__( 'Chat configuration error. Please contact support.', 'chatkit-wp' ),
 							'loadFailed'    => \__( 'Chat widget failed to load. Please refresh the page.', 'chatkit-wp' ),
